@@ -354,6 +354,10 @@
         <option value="Separada">Separada</option>
       </select>
     </div>
+    <div class="field" id="separadoConField" style="display:none;">
+  <label>Separada con</label>
+  <input type="number" id="separadoCon" min="0" step="1000" placeholder="Ej. 200000">
+</div>
     <div class="error-text" id="checkoutError">Escribe el número de factura.</div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('overlayCheckout')">Cancelar</button>
@@ -650,8 +654,21 @@ function removeFromCart(i){
 function openCheckout(){
   document.getElementById('checkoutError').style.display = 'none';
   document.getElementById('facturaNum').value = '';
+  document.getElementById('facturaEstado').value = 'Vendida';
+  document.getElementById('separadoCon').value = '';
+  document.getElementById('separadoConField').style.display = 'none';
   openModal('overlayCheckout');
 }
+  document.getElementById('facturaEstado').addEventListener('change', function(){
+  const campo = document.getElementById('separadoConField');
+
+  if (this.value === 'Separada'){
+    campo.style.display = 'block';
+  } else {
+    campo.style.display = 'none';
+    document.getElementById('separadoCon').value = '';
+  }
+});
 async function confirmCheckout(){
   const factura = document.getElementById('facturaNum').value.trim();
   const estado = document.getElementById('facturaEstado').value;
