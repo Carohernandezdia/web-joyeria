@@ -674,14 +674,33 @@ async function confirmCheckout(){
   const estado = document.getElementById('facturaEstado').value;
   const errEl = document.getElementById('checkoutError');
   if (!factura){ errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
+const separadoCon = estado === 'Separada'
+  ? parseFloat(document.getElementById('separadoCon').value) || 0
+  : 0;
 
-  if (!APPS_SCRIPT_URL){ showToast('Conecta primero con Google Sheets desde ⚙ Configuración.'); return; }
+if (estado === 'Separada' && separadoCon <= 0){
+  showToast('Indica con cuánto se separó la joya.');
+  return;
+}
 
-  const btn = document.getElementById('confirmCheckoutBtn');
-  btn.disabled = true; btn.textContent = 'Enviando...';
+errEl.style.display = 'none';
 
-  const venta = cart.map(item => ({ ...item, factura, estado, vendedor: item.vendedor || getVendor() }));
+if (!APPS_SCRIPT_URL){
+  showToast('Conecta primero con Google Sheets desde ⚙️ Configuración.');
+  return;
+}
+
+const btn = document.getElementById('confirmCheckoutBtn');
+btn.disabled = true;
+btn.textContent = 'Enviando...';
+
+const venta = cart.map(item => ({
+  ...item,
+  factura,
+  estado,
+  separadoCon,
+  vendedor: item.vendedor || getVendor()
+}));
 
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
