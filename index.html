@@ -294,8 +294,8 @@
     Abonos
   </button>
   <button class="nav-btn" id="settingsNavBtn">
-    <span class="nav-icon">⚙</span>
-    Configuración
+    <span class="nav-icon">🔐</span>
+    Admin
   </button>
 </nav>
 
@@ -446,7 +446,7 @@
 <div class="overlay center hidden" id="overlayAdmin">
   <div class="modal">
     <div id="adminPinView">
-      <h3>Configuración</h3>
+      <h3>🔐 Admin</h3>
       <div class="field">
         <label>Contraseña</label>
         <input type="password" id="adminPin" placeholder="••••">
@@ -459,36 +459,50 @@
     </div>
 
     <div id="adminConfigView" style="display:none;">
-      <h3>Precios y categorías</h3>
-      <div id="adminCategories"></div>
-      <button class="link-btn" onclick="addAdminCategory()">+ Agregar categoría nueva</button>
+      <h3>Panel de administración</h3>
+      <div class="tabs" style="margin-bottom:16px;">
+        <button class="tab active" id="adminTabBtn-precios" onclick="switchAdminTab('precios')">Precios</button>
+        <button class="tab" id="adminTabBtn-inventario" onclick="switchAdminTab('inventario')">Inventario</button>
+        <button class="tab" id="adminTabBtn-config" onclick="switchAdminTab('config')">Configuración</button>
+      </div>
 
-      <div class="admin-section">
-        <h4>Conexión con Google Sheets</h4>
+      <div id="adminTab-precios">
+        <div id="adminCategories"></div>
+        <button class="link-btn" onclick="addAdminCategory()">+ Agregar categoría nueva</button>
+        <div class="error-text" id="adminSaveError">No se pudo guardar. Verifica la conexión.</div>
+        <div class="modal-actions">
+          <button class="btn btn-gold btn-block" id="saveAdminBtn" onclick="saveAdminConfig()">Guardar precios y categorías</button>
+        </div>
+      </div>
+
+      <div id="adminTab-inventario" style="display:none;">
+        <div id="adminInventario"></div>
+      </div>
+
+      <div id="adminTab-config" style="display:none;">
         <div class="field">
           <label>URL de Apps Script</label>
           <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
         </div>
+        <button class="btn btn-ghost btn-block" onclick="saveScriptUrlOnly()">Guardar conexión</button>
+
+        <div class="admin-section">
+          <h4>Cambiar contraseña</h4>
+          <div class="field">
+            <label>Contraseña actual</label>
+            <input type="password" id="pinActualInput" placeholder="••••">
+          </div>
+          <div class="field">
+            <label>Contraseña nueva</label>
+            <input type="password" id="pinNuevoInput" placeholder="••••">
+          </div>
+          <div class="error-text" id="pinChangeError"></div>
+          <button class="btn btn-ghost btn-block" id="pinChangeBtn" onclick="cambiarPin()">Cambiar contraseña</button>
+        </div>
       </div>
 
-      <div class="error-text" id="adminSaveError">No se pudo guardar. Verifica la conexión.</div>
       <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeModal('overlayAdmin')">Cerrar</button>
-        <button class="btn btn-gold" style="flex:1" id="saveAdminBtn" onclick="saveAdminConfig()">Guardar cambios</button>
-      </div>
-
-      <div class="admin-section">
-        <h4>Cambiar contraseña</h4>
-        <div class="field">
-          <label>Contraseña actual</label>
-          <input type="password" id="pinActualInput" placeholder="••••">
-        </div>
-        <div class="field">
-          <label>Contraseña nueva</label>
-          <input type="password" id="pinNuevoInput" placeholder="••••">
-        </div>
-        <div class="error-text" id="pinChangeError"></div>
-        <button class="btn btn-ghost btn-block" id="pinChangeBtn" onclick="cambiarPin()">Cambiar contraseña</button>
+        <button class="btn btn-ghost btn-block" onclick="closeModal('overlayAdmin')">Cerrar</button>
       </div>
     </div>
   </div>
@@ -1067,7 +1081,91 @@ function checkAdminPin(){
   document.getElementById('pinActualInput').value = '';
   document.getElementById('pinNuevoInput').value = '';
   document.getElementById('pinChangeError').style.display = 'none';
+  switchAdminTab('precios');
   renderAdminCategories();
+  loadInventarioAdmin();
+}
+
+let inventarioActual = {}; // clave: código (o categoria::producto) -> cantidad
+
+async function loadInventarioAdmin(){
+  const wrap = document.getElementById('adminInventario');
+  wrap.innerHTML = '<div class="modal-sub" style="margin:0;">Cargando inventario...</div>';
+  if (!APPS_SCRIPT_URL){
+    wrap.innerHTML = '<div class="modal-sub" style="margin:0;">Conecta primero con Google Sheets.</div>';
+    return;
+  }
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=inventario');
+    const data = await res.json();
+    inventarioActual = {};
+    (data.inventario || []).forEach(i => {
+      const key = i.codigo || (i.categoria + '::' + i.producto);
+      inventarioActual[key] = i.cantidad;
+    });
+    renderInventarioAdmin();
+  }catch(err){
+    wrap.innerHTML = '<div class="modal-sub" style="margin:0;">No se pudo cargar el inventario.</div>';
+  }
+}
+
+function renderInventarioAdmin(){
+  const wrap = document.getElementById('adminInventario');
+  wrap.innerHTML = '';
+  adminDraft.forEach(cat => {
+    if (cat.tipo === 'manual') return; // reparaciones no maneja stock
+    (cat.items || []).forEach(item => {
+      const codigo = cat.tipo === 'peso' ? (item.codigo || '') : (cat.codigo || '');
+      const key = codigo || (cat.nombre + '::' + item.nombre);
+      const stock = inventarioActual[key] || 0;
+      const unidad = cat.tipo === 'peso' ? 'g' : 'u';
+      const inputId = 'entrada_' + Math.random().toString(36).slice(2,9);
+
+      const row = document.createElement('div');
+      row.className = 'admin-item-card';
+      row.innerHTML = `
+        <div class="admin-item-row">
+          <div style="flex:2"><span class="admin-item-label">${cat.nombre} — ${item.nombre}</span><div style="font-size:14px;">${stock} ${unidad} en stock</div></div>
+          <div><span class="admin-item-label">Entrada</span><input type="number" id="${inputId}" min="0" placeholder="0"></div>
+          <button class="link-btn" style="white-space:nowrap;" onclick="agregarEntrada('${cat.nombre.replace(/'/g,"\\'")}','${item.nombre.replace(/'/g,"\\'")}','${codigo}','${inputId}',this)">+ Agregar</button>
+        </div>
+      `;
+      wrap.appendChild(row);
+    });
+  });
+  if (!wrap.children.length){
+    wrap.innerHTML = '<div class="modal-sub" style="margin:0;">No hay productos con inventario todavía.</div>';
+  }
+}
+
+async function agregarEntrada(categoria, producto, codigo, inputId, btn){
+  const cantidad = parseNum(document.getElementById(inputId).value);
+  if (!cantidad || cantidad <= 0){ showToast('Escribe una cantidad válida.'); return; }
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Guardando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'registrarEntrada', pin: adminPinValue, categoria, producto, codigo, cantidad })
+    });
+    const data = await res.json();
+    if (data.success){
+      const key = codigo || (categoria + '::' + producto);
+      inventarioActual[key] = data.cantidadActual;
+      renderInventarioAdmin();
+      showToast('Entrada registrada ✓');
+    } else {
+      showToast(data.error || 'No se pudo registrar la entrada.');
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = original;
+  }
 }
 
 function renderAdminCategories(){
@@ -1204,19 +1302,32 @@ function addAdminCategory(){
   renderAdminCategories();
 }
 
-async function saveAdminConfig(){
-  const url = document.getElementById('scriptUrlInput').value.trim();
-  const errEl = document.getElementById('adminSaveError');
-  errEl.style.display = 'none';
+function switchAdminTab(tab){
+  ['precios','inventario','config'].forEach(t => {
+    document.getElementById('adminTab-' + t).style.display = (t === tab) ? 'block' : 'none';
+    document.getElementById('adminTabBtn-' + t).classList.toggle('active', t === tab);
+  });
+}
 
-  if (!url){
-    errEl.textContent = 'Pega la URL de Apps Script.';
-    errEl.style.display = 'block';
-    return;
-  }
+function saveScriptUrlOnly(){
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  if (!url){ showToast('Pega la URL de Apps Script.'); return; }
   APPS_SCRIPT_URL = url;
   localStorage.setItem('dalias_script_url', url);
   updateConnectBanner();
+  showToast('Conexión guardada ✓');
+  loadInventarioAdmin();
+}
+
+async function saveAdminConfig(){
+  const errEl = document.getElementById('adminSaveError');
+  errEl.style.display = 'none';
+
+  if (!APPS_SCRIPT_URL){
+    errEl.textContent = 'Conecta primero con Google Sheets en la pestaña Configuración.';
+    errEl.style.display = 'block';
+    return;
+  }
 
   const cleanCategorias = adminDraft
     .filter(c => c.nombre)
