@@ -1,4 +1,3 @@
- Index · HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -30,8 +29,7 @@
     min-height:100vh;
   }
   h1,h2,h3,.serif{ font-family:'Cormorant Garamond', serif; }
- 
-  /* ---------- Header ---------- */
+
   header{
     display:flex; align-items:center; justify-content:space-between;
     padding: 18px 24px;
@@ -56,14 +54,14 @@
     -webkit-background-clip: text; background-clip:text; color: transparent;
   }
   .brand .sub{ font-size:11px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; margin-top:-2px;}
- 
+
   .vendor-field{ display:flex; flex-direction:column; }
   .vendor-field label{ font-size:10px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;}
   .vendor-field input{
     background: var(--panel); border:1px solid var(--line); color: var(--text);
     padding:8px 10px; border-radius:8px; font-size:14px; width:170px;
   }
- 
+
   .connect-banner{
     background: #241c08; border:1px solid var(--gold-deep); color: var(--gold-light);
     font-size:13px; padding:10px 16px; text-align:center; display:none;
@@ -73,11 +71,9 @@
     background:none; border:1px solid var(--gold); color:var(--gold-light);
     border-radius:6px; padding:3px 10px; margin-left:10px; cursor:pointer; font-size:12px;
   }
- 
-  /* ---------- Layout ---------- */
+
   .content{ max-width:1000px; margin:0 auto; padding: 22px 20px 110px; }
- 
-  /* ---------- Tabs (categorías) ---------- */
+
   .tabs{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
   .tab{
     padding:10px 18px; border-radius: 999px; border:1px solid var(--line);
@@ -89,8 +85,7 @@
     color:#171205; background: linear-gradient(180deg, var(--gold-light), var(--gold));
     border-color: var(--gold);
   }
- 
-  /* ---------- Item cards (peso) ---------- */
+
   .item-grid{
     display:grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr));
     gap:16px;
@@ -109,8 +104,7 @@
   .item-card h3{ margin:0 0 4px; font-size:22px; color: var(--gold-light); }
   .item-card .price{ font-size:13px; color: var(--text-dim); position:relative; }
   .item-card .price b{ color: var(--gold); font-weight:600; }
- 
-  /* ---------- Item list (fijo) ---------- */
+
   .item-list-grid{
     display:grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr));
     gap:14px;
@@ -123,10 +117,19 @@
   .item-list-card:hover{ border-color: var(--gold); transform: translateY(-2px); }
   .item-list-card .pname{ font-weight:600; font-size:15px; }
   .item-list-card .pprice{ color: var(--gold); font-weight:600; font-size:14px; }
- 
+
+  .manual-card{
+    background: linear-gradient(160deg, var(--panel-2), var(--panel));
+    border: 1px dashed var(--gold-deep); border-radius: var(--radius);
+    padding: 26px; cursor:pointer; text-align:center; max-width:320px;
+    transition: transform .15s, border-color .15s;
+  }
+  .manual-card:hover{ transform: translateY(-3px); border-color: var(--gold); }
+  .manual-card h3{ margin:0 0 6px; font-size:22px; color: var(--gold-light); }
+  .manual-card p{ margin:0; font-size:13px; color: var(--text-dim); }
+
   .empty-msg{ color: var(--text-dim); font-size:14px; padding: 30px 20px; text-align:center; border:1px dashed var(--line); border-radius:var(--radius);}
- 
-  /* ---------- Bottom nav ---------- */
+
   .bottom-nav{
     position:fixed; bottom:0; left:0; right:0; z-index:30;
     background: linear-gradient(0deg, #101011, #0b0b0cee);
@@ -151,8 +154,7 @@
     font-size:11px; font-weight:800; border-radius:999px; min-width:18px; height:18px;
     display:flex; align-items:center; justify-content:center; padding:0 4px;
   }
- 
-  /* ---------- Sheet (bottom modal) ---------- */
+
   .overlay{
     position:fixed; inset:0; background: rgba(0,0,0,.65); backdrop-filter: blur(2px);
     display:flex; align-items:flex-end; justify-content:center; z-index:100;
@@ -169,7 +171,7 @@
   }
   .sheet h3, .modal h3{ margin:0 0 18px; font-size:24px; color: var(--gold-light); }
   .sheet-handle{ width:40px; height:4px; background: var(--line); border-radius:99px; margin: 0 auto 16px; }
- 
+
   .field{ margin-bottom:14px; }
   .field label{ display:block; font-size:11px; letter-spacing:1px; text-transform:uppercase; color: var(--text-dim); margin-bottom:6px;}
   .field input, .field select, .field textarea{
@@ -180,7 +182,8 @@
   .modal-actions{ display:flex; gap:10px; margin-top:20px; }
   .modal-sub{ color: var(--text-dim); font-size:13px; margin: -10px 0 16px; }
   .error-text{ color: var(--danger); font-size:13px; margin-top:-6px; margin-bottom:10px; display:none; }
- 
+  .aviso-text{ color: var(--gold-light); font-size:12px; margin: 6px 0 0; }
+
   .btn{
     padding:13px 18px; border-radius:10px; border:none; cursor:pointer;
     font-weight:700; font-size:14px; letter-spacing:.5px; text-transform:uppercase;
@@ -193,8 +196,7 @@
   .btn-ghost{ background:transparent; border:1px solid var(--line); color: var(--text-dim); }
   .btn-ghost:hover{ border-color: var(--gold); color: var(--gold); }
   .btn-danger{ background:transparent; border:1px solid var(--danger); color: var(--danger); }
- 
-  /* cart list inside sheet */
+
   .cart-items{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
   .cart-item{
     background: var(--panel-2); border:1px solid var(--line); border-radius:10px;
@@ -215,21 +217,23 @@
     font-size:16px; font-weight:700; margin-bottom:16px;
   }
   .cart-total b{ color: var(--gold); }
- 
-  /* admin */
+
   .admin-section{ border-top:1px solid var(--line); margin-top:18px; padding-top:16px; }
   .admin-section h4{ margin:0 0 10px; font-size:16px; color: var(--gold-light); font-weight:600; }
   .admin-cat-block{ background: var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; }
   .admin-cat-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
   .admin-cat-header .cat-title{ font-weight:700; color: var(--gold-light); font-size:15px; }
   .admin-cat-header .cat-type{ font-size:11px; color: var(--text-dim); text-transform:uppercase; }
-  .admin-row{ display:grid; grid-template-columns: 1fr 100px 30px; gap:8px; align-items:center; margin-bottom:8px; }
+  .admin-row{ display:grid; grid-template-columns: 1fr 90px 80px 30px; gap:6px; align-items:center; margin-bottom:8px; }
   .admin-row input{ background: var(--panel); border:1px solid var(--line); color:var(--text); padding:8px; border-radius:6px; font-size:13px;}
   .admin-row button{ background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:16px;}
   .admin-row button:hover{ color: var(--danger); }
+  .admin-cat-codigo{ margin-bottom:10px; }
+  .admin-cat-codigo label{ font-size:10px; letter-spacing:1px; text-transform:uppercase; color: var(--text-dim); display:block; margin-bottom:4px; }
+  .admin-cat-codigo input{ background: var(--panel); border:1px solid var(--line); color:var(--text); padding:7px 10px; border-radius:6px; font-size:13px; width:160px; }
   .link-btn{ background:none; border:none; color: var(--gold); cursor:pointer; font-size:13px; padding:0; text-align:left; }
   .cat-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
- 
+
   .toast{
     position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
     background: var(--panel); border:1px solid var(--gold); color: var(--text);
@@ -240,7 +244,7 @@
 </style>
 </head>
 <body>
- 
+
 <header>
   <div class="brand">
     <div class="mark" id="logoMark">D</div>
@@ -254,17 +258,17 @@
     <input id="vendorInput" placeholder="Tu nombre">
   </div>
 </header>
- 
+
 <div class="connect-banner" id="connectBanner">
   Esta app aún no está conectada a tu Google Sheets.
   <button onclick="openAdminFromBanner()">Conectar ahora</button>
 </div>
- 
+
 <div class="content">
   <div class="tabs" id="categoryTabs"></div>
   <div id="categoryContent"></div>
 </div>
- 
+
 <nav class="bottom-nav">
   <button class="nav-btn" id="cartNavBtn">
     <span class="nav-icon">🛒<span class="nav-badge" id="cartBadge" style="display:none;">0</span></span>
@@ -275,11 +279,11 @@
     Abonos
   </button>
   <button class="nav-btn" id="settingsNavBtn">
-    <span class="nav-icon">⚙️</span>
+    <span class="nav-icon">⚙</span>
     Configuración
   </button>
 </nav>
- 
+
 <!-- Sheet: agregar item tipo peso (oro) -->
 <div class="overlay hidden" id="overlayPeso">
   <div class="sheet">
@@ -305,8 +309,8 @@
     </div>
   </div>
 </div>
- 
-<!-- Sheet: agregar item tipo fijo (perfumes, etc) -->
+
+<!-- Sheet: agregar item tipo fijo (perfumes, tejido, etc) -->
 <div class="overlay hidden" id="overlayFijo">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -327,7 +331,32 @@
     </div>
   </div>
 </div>
- 
+
+<!-- Sheet: agregar item tipo manual (reparaciones) -->
+<div class="overlay hidden" id="overlayManual">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="manualModalTitle">Reparaciones</h3>
+    <div class="field">
+      <label>Costo</label>
+      <input type="number" id="manualMonto" min="0" step="1000" placeholder="Ej. 30000">
+    </div>
+    <div class="field">
+      <label>Especificación</label>
+      <textarea id="manualEspec" rows="2" placeholder="Ej. Cambio de broche pulsera"></textarea>
+    </div>
+    <div class="field">
+      <label>Descuento (%)</label>
+      <input type="number" id="manualDescuento" step="1" min="0" max="100" value="0">
+    </div>
+    <div class="modal-sub" id="manualSubtotalPreview">Subtotal: $ 0</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeItemModal('overlayManual')">Cancelar</button>
+      <button class="btn btn-gold" style="flex:1" id="manualConfirmBtn" onclick="addManualToCart()">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
 <!-- Sheet: carrito -->
 <div class="overlay hidden" id="overlayCart">
   <div class="sheet">
@@ -346,7 +375,7 @@
     </div>
   </div>
 </div>
- 
+
 <!-- Modal: checkout -->
 <div class="overlay center hidden" id="overlayCheckout">
   <div class="modal">
@@ -373,7 +402,7 @@
     </div>
   </div>
 </div>
- 
+
 <!-- Modal: abonos -->
 <div class="overlay center hidden" id="overlayAbonos">
   <div class="modal">
@@ -384,7 +413,7 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('overlayAbonos')">Cerrar</button>
-      <button class="btn btn-gold" style="flex:1" onclick="buscarFacturaAbono()">Buscar</button>
+      <button class="btn btn-gold" style="flex:1" id="buscarFacturaBtn" onclick="buscarFacturaAbono()">Buscar</button>
     </div>
     <div id="abonoResultado" style="display:none; margin-top:18px;">
       <div class="modal-sub" id="abonoInfo" style="margin-top:0; line-height:1.7;"></div>
@@ -393,11 +422,11 @@
         <input type="number" id="abonoMonto" min="0" step="1000" placeholder="Ej. 50000">
       </div>
       <div class="error-text" id="abonoError"></div>
-      <button class="btn btn-gold btn-block" onclick="registrarAbonoBtn()">Registrar abono</button>
+      <button class="btn btn-gold btn-block" id="registrarAbonoBtn" onclick="registrarAbonoBtn()">Registrar abono</button>
     </div>
   </div>
 </div>
- 
+
 <!-- Modal: admin -->
 <div class="overlay center hidden" id="overlayAdmin">
   <div class="modal">
@@ -413,12 +442,12 @@
         <button class="btn btn-gold" style="flex:1" onclick="checkAdminPin()">Entrar</button>
       </div>
     </div>
- 
+
     <div id="adminConfigView" style="display:none;">
       <h3>Precios y categorías</h3>
       <div id="adminCategories"></div>
       <button class="link-btn" onclick="addAdminCategory()">+ Agregar categoría nueva</button>
- 
+
       <div class="admin-section">
         <h4>Conexión con Google Sheets</h4>
         <div class="field">
@@ -426,39 +455,55 @@
           <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
         </div>
       </div>
- 
+
       <div class="error-text" id="adminSaveError">No se pudo guardar. Verifica la conexión.</div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal('overlayAdmin')">Cerrar</button>
-        <button class="btn btn-gold" style="flex:1" onclick="saveAdminConfig()">Guardar cambios</button>
+        <button class="btn btn-gold" style="flex:1" id="saveAdminBtn" onclick="saveAdminConfig()">Guardar cambios</button>
+      </div>
+
+      <div class="admin-section">
+        <h4>Cambiar contraseña</h4>
+        <div class="field">
+          <label>Contraseña actual</label>
+          <input type="password" id="pinActualInput" placeholder="••••">
+        </div>
+        <div class="field">
+          <label>Contraseña nueva</label>
+          <input type="password" id="pinNuevoInput" placeholder="••••">
+        </div>
+        <div class="error-text" id="pinChangeError"></div>
+        <button class="btn btn-ghost btn-block" id="pinChangeBtn" onclick="cambiarPin()">Cambiar contraseña</button>
       </div>
     </div>
   </div>
 </div>
- 
+
 <div class="toast" id="toast"></div>
- 
+
 <script>
 /* ==========================================================
    Configura la conexión con tu Google Sheets desde el ícono
-   ⚙️ Configuración dentro de la app (con la contraseña).
+   ⚙ Configuración dentro de la app (con la contraseña).
    ========================================================== */
 let APPS_SCRIPT_URL = localStorage.getItem('dalias_script_url') || '';
- 
+
 let categorias = [
   { nombre: 'Oro', tipo: 'peso', items: [
-    { nombre: 'Italiano', precio: 0 },
-    { nombre: 'Zaragozano', precio: 0 },
-    { nombre: 'Personalizado', precio: 0 },
-    { nombre: 'Nacional', precio: 0 }
+    { nombre: 'Italiano', precio: 0, codigo: 'ITALY' },
+    { nombre: 'Zaragozano', precio: 0, codigo: 'ZA/ZA' },
+    { nombre: 'Personalizado', precio: 0, codigo: 'PERSO' },
+    { nombre: 'Nacional', precio: 0, codigo: 'NAC' }
   ]},
-  { nombre: 'Perfumes', tipo: 'fijo', items: [] }
+  { nombre: 'Perfumes', tipo: 'fijo', codigo: 'PERFUM', items: [] },
+  { nombre: 'Reparaciones', tipo: 'manual', codigo: 'REPAR', items: [] },
+  { nombre: 'Tejido', tipo: 'fijo', codigo: 'TEJ', items: [{ nombre: 'Tejido', precio: 0 }] }
 ];
 let activeCatIndex = 0;
 let cart = [];
 let selectedItem = null; // { catIndex, itemIndex }
 let editingIndex = null; // índice en cart[] que se está editando (null = agregar nuevo)
- 
+
 // ---------- Helpers ----------
 function fmt(n){ return '$ ' + Number(n || 0).toLocaleString('es-CO', {maximumFractionDigits:0}); }
 function showToast(msg){
@@ -470,29 +515,39 @@ function getVendor(){ return document.getElementById('vendorInput').value.trim()
 function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 function closeItemModal(id){ editingIndex = null; closeModal(id); }
- 
+
 // ---------- Init ----------
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('vendorInput').value = localStorage.getItem('dalias_vendor') || '';
   document.getElementById('vendorInput').addEventListener('input', e => {
     localStorage.setItem('dalias_vendor', e.target.value);
   });
- 
+
   document.getElementById('cartNavBtn').addEventListener('click', () => openModal('overlayCart'));
   document.getElementById('abonosNavBtn').addEventListener('click', openAbonos);
   document.getElementById('settingsNavBtn').addEventListener('click', openAdmin);
- 
+
+  document.getElementById('facturaEstado').addEventListener('change', function(){
+    const campo = document.getElementById('abonoField');
+    if (this.value === 'Separada'){
+      campo.style.display = 'block';
+    } else {
+      campo.style.display = 'none';
+      document.getElementById('abonoInicial').value = '';
+    }
+  });
+
   renderTabs();
   renderCategoryContent();
   updateConnectBanner();
   if (APPS_SCRIPT_URL) loadConfig();
 });
- 
+
 function updateConnectBanner(){
   document.getElementById('connectBanner').classList.toggle('show', !APPS_SCRIPT_URL);
 }
 function openAdminFromBanner(){ openAdmin(); }
- 
+
 // ---------- Cargar config desde Apps Script ----------
 async function loadConfig(){
   try{
@@ -508,7 +563,7 @@ async function loadConfig(){
     showToast('No se pudo cargar la configuración. Revisa la conexión.');
   }
 }
- 
+
 // ---------- Tabs y contenido por categoría ----------
 function renderTabs(){
   const wrap = document.getElementById('categoryTabs');
@@ -525,7 +580,7 @@ function renderTabs(){
     wrap.appendChild(btn);
   });
 }
- 
+
 function renderCategoryContent(){
   const container = document.getElementById('categoryContent');
   container.innerHTML = '';
@@ -534,18 +589,28 @@ function renderCategoryContent(){
     container.innerHTML = '<div class="empty-msg">No hay categorías configuradas todavía.</div>';
     return;
   }
-  if (!cat.items || !cat.items.length){
-    container.innerHTML = <div class="empty-msg">Aún no hay artículos en "${cat.nombre}". Agrégalos desde ⚙️ Configuración.</div>;
+
+  if (cat.tipo === 'manual'){
+    const card = document.createElement('div');
+    card.className = 'manual-card';
+    card.innerHTML = `<h3>${cat.nombre}</h3><p>Toca para registrar el costo y la especificación</p>`;
+    card.addEventListener('click', () => openManualModal(activeCatIndex));
+    container.appendChild(card);
     return;
   }
- 
+
+  if (!cat.items || !cat.items.length){
+    container.innerHTML = `<div class="empty-msg">Aún no hay artículos en "${cat.nombre}". Agrégalos desde ⚙ Configuración.</div>`;
+    return;
+  }
+
   if (cat.tipo === 'peso'){
     const grid = document.createElement('div');
     grid.className = 'item-grid';
     cat.items.forEach((item, i) => {
       const card = document.createElement('div');
       card.className = 'item-card';
-      card.innerHTML = <h3>${item.nombre}</h3><div class="price">Precio/g: <b>${fmt(item.precio)}</b></div>;
+      card.innerHTML = `<h3>${item.nombre}</h3><div class="price">Precio/g: <b>${fmt(item.precio)}</b></div>`;
       card.addEventListener('click', () => openPesoModal(activeCatIndex, i));
       grid.appendChild(card);
     });
@@ -556,14 +621,14 @@ function renderCategoryContent(){
     cat.items.forEach((item, i) => {
       const card = document.createElement('div');
       card.className = 'item-list-card';
-      card.innerHTML = <span class="pname">${item.nombre}</span><span class="pprice">${fmt(item.precio)}</span>;
+      card.innerHTML = `<span class="pname">${item.nombre}</span><span class="pprice">${fmt(item.precio)}</span>`;
       card.addEventListener('click', () => openFijoModal(activeCatIndex, i));
       grid.appendChild(card);
     });
     container.appendChild(grid);
   }
 }
- 
+
 // ---------- Modal tipo peso ----------
 function openPesoModal(catIndex, itemIndex){
   editingIndex = null;
@@ -587,19 +652,19 @@ function updatePesoPreview(){
   if (!cat) return;
   const item = cat.items[selectedItem.itemIndex];
   if (!item) return;
-  const peso = parseFloat(document.getElementById('pesoValor').value) || 0;
-  const desc = parseFloat(document.getElementById('pesoDescuento').value) || 0;
+  const peso = parseNum(document.getElementById('pesoValor').value);
+  const desc = parseNum(document.getElementById('pesoDescuento').value);
   const total = peso * item.precio * (1 - desc/100);
   document.getElementById('pesoSubtotalPreview').textContent = 'Subtotal: ' + fmt(total);
 }
 function addPesoToCart(){
   const cat = categorias[selectedItem.catIndex]; const item = cat.items[selectedItem.itemIndex];
-  const peso = parseFloat(document.getElementById('pesoValor').value);
+  const peso = parseNum(document.getElementById('pesoValor').value);
   const espec = document.getElementById('pesoEspec').value.trim();
-  const desc = parseFloat(document.getElementById('pesoDescuento').value) || 0;
+  const desc = parseNum(document.getElementById('pesoDescuento').value);
   if (!peso || peso <= 0){ showToast('Escribe un peso válido.'); return; }
   if (!espec){ showToast('Escribe la especificación de la joya.'); return; }
- 
+
   const total = Math.round(peso * item.precio * (1 - desc/100));
   const nuevoItem = {
     categoria: cat.nombre, tipoOroOProducto: item.nombre,
@@ -607,7 +672,7 @@ function addPesoToCart(){
     descuento: desc, total, vendedor: getVendor(),
     catIndex: selectedItem.catIndex, itemIndex: selectedItem.itemIndex
   };
- 
+
   if (editingIndex !== null){
     cart[editingIndex] = nuevoItem;
     editingIndex = null;
@@ -618,7 +683,7 @@ function addPesoToCart(){
   renderCartBadge();
   showToast('Guardado en el carrito');
 }
- 
+
 // ---------- Modal tipo fijo ----------
 function openFijoModal(catIndex, itemIndex){
   editingIndex = null;
@@ -641,17 +706,17 @@ function updateFijoPreview(){
   if (!cat) return;
   const item = cat.items[selectedItem.itemIndex];
   if (!item) return;
-  const cant = parseInt(document.getElementById('fijoCantidad').value) || 0;
-  const desc = parseFloat(document.getElementById('fijoDescuento').value) || 0;
+  const cant = parseNum(document.getElementById('fijoCantidad').value);
+  const desc = parseNum(document.getElementById('fijoDescuento').value);
   const total = cant * item.precio * (1 - desc/100);
   document.getElementById('fijoSubtotalPreview').textContent = 'Subtotal: ' + fmt(total);
 }
 function addFijoToCart(){
   const cat = categorias[selectedItem.catIndex]; const item = cat.items[selectedItem.itemIndex];
-  const cant = parseInt(document.getElementById('fijoCantidad').value);
-  const desc = parseFloat(document.getElementById('fijoDescuento').value) || 0;
+  const cant = parseNum(document.getElementById('fijoCantidad').value);
+  const desc = parseNum(document.getElementById('fijoDescuento').value);
   if (!cant || cant <= 0){ showToast('Escribe una cantidad válida.'); return; }
- 
+
   const total = Math.round(cant * item.precio * (1 - desc/100));
   const nuevoItem = {
     categoria: cat.nombre, tipoOroOProducto: item.nombre + (cant > 1 ? ' x' + cant : ''),
@@ -659,7 +724,7 @@ function addFijoToCart(){
     descuento: desc, total, vendedor: getVendor(),
     catIndex: selectedItem.catIndex, itemIndex: selectedItem.itemIndex, cantidad: cant
   };
- 
+
   if (editingIndex !== null){
     cart[editingIndex] = nuevoItem;
     editingIndex = null;
@@ -670,7 +735,56 @@ function addFijoToCart(){
   renderCartBadge();
   showToast('Guardado en el carrito');
 }
- 
+
+// ---------- Modal tipo manual (reparaciones) ----------
+function openManualModal(catIndex){
+  editingIndex = null;
+  selectedItem = { catIndex, itemIndex: null };
+  const cat = categorias[catIndex];
+  document.getElementById('manualModalTitle').textContent = cat.nombre;
+  document.getElementById('manualMonto').value = '';
+  document.getElementById('manualEspec').value = '';
+  document.getElementById('manualDescuento').value = 0;
+  document.getElementById('manualConfirmBtn').textContent = 'Agregar al carrito';
+  updateManualPreview();
+  openModal('overlayManual');
+}
+['manualMonto','manualDescuento'].forEach(id => {
+  document.addEventListener('input', e => { if (e.target.id === id) updateManualPreview(); });
+});
+function updateManualPreview(){
+  const monto = parseNum(document.getElementById('manualMonto').value);
+  const desc = parseNum(document.getElementById('manualDescuento').value);
+  const total = monto * (1 - desc/100);
+  document.getElementById('manualSubtotalPreview').textContent = 'Subtotal: ' + fmt(total);
+}
+function addManualToCart(){
+  const cat = categorias[selectedItem.catIndex];
+  const monto = parseNum(document.getElementById('manualMonto').value);
+  const espec = document.getElementById('manualEspec').value.trim();
+  const desc = parseNum(document.getElementById('manualDescuento').value);
+  if (!monto || monto <= 0){ showToast('Escribe un costo válido.'); return; }
+  if (!espec){ showToast('Escribe la especificación.'); return; }
+
+  const total = Math.round(monto * (1 - desc/100));
+  const nuevoItem = {
+    categoria: cat.nombre, tipoOroOProducto: cat.nombre,
+    peso: '', especificacion: espec, precioUnitario: monto,
+    descuento: desc, total, vendedor: getVendor(),
+    catIndex: selectedItem.catIndex, itemIndex: null
+  };
+
+  if (editingIndex !== null){
+    cart[editingIndex] = nuevoItem;
+    editingIndex = null;
+  } else {
+    cart.push(nuevoItem);
+  }
+  closeModal('overlayManual');
+  renderCartBadge();
+  showToast('Guardado en el carrito');
+}
+
 // ---------- Carrito ----------
 function renderCartBadge(){
   const badge = document.getElementById('cartBadge');
@@ -692,8 +806,10 @@ function renderCartSheet(){
       const div = document.createElement('div');
       div.className = 'cart-item';
       const detail = item.peso
-        ? ${item.peso} g · ${item.especificacion}${item.descuento ? ' · -' + item.descuento + '%' : ''}
-        : ${item.descuento ? '-' + item.descuento + '% dcto.' : 'Sin descuento'};
+        ? `${item.peso} g · ${item.especificacion}${item.descuento ? ' · -' + item.descuento + '%' : ''}`
+        : (item.especificacion
+            ? `${item.especificacion}${item.descuento ? ' · -' + item.descuento + '%' : ''}`
+            : `${item.descuento ? '-' + item.descuento + '% dcto.' : 'Sin descuento'}`);
       div.innerHTML = `
         <button class="ci-edit" onclick="editCartItem(${i})" title="Editar">✎</button>
         <button class="ci-remove" onclick="removeFromCart(${i})" title="Eliminar">✕</button>
@@ -714,16 +830,33 @@ function removeFromCart(i){
 function editCartItem(i){
   const item = cart[i];
   const cat = categorias[item.catIndex];
- 
-  if (!cat || !cat.items[item.itemIndex]){
+
+  if (!cat){
+    showToast('Esa categoría ya no existe. Elimínalo y agrégalo de nuevo.');
+    return;
+  }
+
+  editingIndex = i;
+  selectedItem = { catIndex: item.catIndex, itemIndex: item.itemIndex };
+
+  if (cat.tipo === 'manual'){
+    document.getElementById('manualModalTitle').textContent = cat.nombre;
+    document.getElementById('manualMonto').value = item.precioUnitario;
+    document.getElementById('manualEspec').value = item.especificacion;
+    document.getElementById('manualDescuento').value = item.descuento;
+    document.getElementById('manualConfirmBtn').textContent = 'Guardar cambios';
+    updateManualPreview();
+    closeModal('overlayCart');
+    openModal('overlayManual');
+    return;
+  }
+
+  if (!cat.items[item.itemIndex]){
     showToast('Ese producto ya no existe en el catálogo actual. Elimínalo y agrégalo de nuevo.');
     return;
   }
- 
-  editingIndex = i;
-  selectedItem = { catIndex: item.catIndex, itemIndex: item.itemIndex };
   const catalogItem = cat.items[item.itemIndex];
- 
+
   if (cat.tipo === 'peso'){
     document.getElementById('pesoModalTitle').textContent = cat.nombre + ' — ' + catalogItem.nombre;
     document.getElementById('pesoModalPrice').textContent = 'Precio por gramo: ' + fmt(catalogItem.precio);
@@ -745,7 +878,7 @@ function editCartItem(i){
     openModal('overlayFijo');
   }
 }
- 
+
 // ---------- Checkout ----------
 function openCheckout(){
   document.getElementById('checkoutError').style.display = 'none';
@@ -755,41 +888,33 @@ function openCheckout(){
   document.getElementById('abonoField').style.display = 'none';
   openModal('overlayCheckout');
 }
-document.getElementById('facturaEstado').addEventListener('change', function(){
-  const campo = document.getElementById('abonoField');
-  if (this.value === 'Separada'){
-    campo.style.display = 'block';
-  } else {
-    campo.style.display = 'none';
-    document.getElementById('abonoInicial').value = '';
-  }
-});
 async function confirmCheckout(){
   const factura = document.getElementById('facturaNum').value.trim();
   const estado = document.getElementById('facturaEstado').value;
   const errEl = document.getElementById('checkoutError');
   if (!factura){ errEl.style.display = 'block'; return; }
- 
+
   const abono = estado === 'Separada'
-    ? parseFloat(document.getElementById('abonoInicial').value) || 0
+    ? parseNum(document.getElementById('abonoInicial').value)
     : 0;
- 
+
   if (estado === 'Separada' && abono <= 0){
     showToast('Indica con cuánto se separó la joya.');
     return;
   }
- 
+
   errEl.style.display = 'none';
- 
+
   if (!APPS_SCRIPT_URL){
     showToast('Conecta primero con Google Sheets desde ⚙️ Configuración.');
     return;
   }
- 
+
   const btn = document.getElementById('confirmCheckoutBtn');
+  if (btn.disabled) return; // evita doble clic
   btn.disabled = true;
   btn.textContent = 'Enviando...';
- 
+
   const venta = cart.map(item => ({
     ...item,
     factura,
@@ -797,7 +922,7 @@ async function confirmCheckout(){
     abono,
     vendedor: item.vendedor || getVendor()
   }));
- 
+
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -820,7 +945,7 @@ async function confirmCheckout(){
     btn.disabled = false; btn.textContent = 'Confirmar venta';
   }
 }
- 
+
 // ---------- Abonos ----------
 function openAbonos(){
   document.getElementById('abonoFactura').value = '';
@@ -833,7 +958,12 @@ async function buscarFacturaAbono(){
   const factura = document.getElementById('abonoFactura').value.trim();
   if (!factura){ showToast('Escribe el número de factura.'); return; }
   if (!APPS_SCRIPT_URL){ showToast('Conecta primero con Google Sheets.'); return; }
- 
+
+  const btn = document.getElementById('buscarFacturaBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -847,25 +977,34 @@ async function buscarFacturaAbono(){
       return;
     }
     document.getElementById('abonoInfo').innerHTML =
-      Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>;
+      `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
+      (data.aviso ? `<div class="aviso-text">${data.aviso}</div>` : '');
     document.getElementById('abonoResultado').style.display = 'block';
     document.getElementById('abonoError').style.display = 'none';
   }catch(err){
     showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Buscar';
   }
 }
 async function registrarAbonoBtn(){
   const factura = document.getElementById('abonoFactura').value.trim();
-  const monto = parseFloat(document.getElementById('abonoMonto').value);
+  const monto = parseNum(document.getElementById('abonoMonto').value);
   const errEl = document.getElementById('abonoError');
   errEl.style.display = 'none';
- 
+
   if (!monto || monto <= 0){
     errEl.textContent = 'Escribe un monto válido.';
     errEl.style.display = 'block';
     return;
   }
- 
+
+  // Bloqueo contra doble clic / clics repetidos mientras se envía.
+  const btn = document.getElementById('registrarAbonoBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -883,13 +1022,15 @@ async function registrarAbonoBtn(){
   }catch(err){
     errEl.textContent = 'No se pudo conectar con el Sheets.';
     errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Registrar abono';
   }
 }
- 
+
 // ---------- Admin ----------
 let adminDraft = null; // copia editable de categorias mientras está abierto el panel
 let adminPinValue = '';
- 
+
 function openAdmin(){
   document.getElementById('adminPinView').style.display = 'block';
   document.getElementById('adminConfigView').style.display = 'none';
@@ -897,61 +1038,109 @@ function openAdmin(){
   document.getElementById('adminPinError').style.display = 'none';
   openModal('overlayAdmin');
 }
- 
+
 function checkAdminPin(){
   adminPinValue = document.getElementById('adminPin').value;
   // El PIN se valida de verdad en el servidor al guardar; esto solo
   // evita que cualquiera vea el panel por accidente.
   document.getElementById('adminPinView').style.display = 'none';
   document.getElementById('adminConfigView').style.display = 'block';
- 
+
   adminDraft = JSON.parse(JSON.stringify(categorias));
   document.getElementById('scriptUrlInput').value = APPS_SCRIPT_URL;
+  document.getElementById('pinActualInput').value = '';
+  document.getElementById('pinNuevoInput').value = '';
+  document.getElementById('pinChangeError').style.display = 'none';
   renderAdminCategories();
 }
- 
+
 function renderAdminCategories(){
   const wrap = document.getElementById('adminCategories');
   wrap.innerHTML = '';
   adminDraft.forEach((cat, ci) => {
     const block = document.createElement('div');
     block.className = 'admin-cat-block';
+
+    const tipoLabel = cat.tipo === 'peso'
+      ? 'Se vende por peso (gramos)'
+      : (cat.tipo === 'manual' ? 'Monto y especificación manual' : 'Precio fijo por producto');
+
+    let itemsHtml = '';
+    if (cat.tipo !== 'manual'){
+      itemsHtml = `
+        <div class="admin-items" id="adminItems-${ci}"></div>
+        <div class="cat-actions">
+          <button class="link-btn" onclick="addAdminItem(${ci})">+ Agregar ${cat.tipo === 'peso' ? 'tipo' : 'producto'}</button>
+          <button class="link-btn" style="color:var(--danger)" onclick="removeAdminCategory(${ci})">Eliminar categoría</button>
+        </div>
+      `;
+    } else {
+      itemsHtml = `
+        <div class="cat-actions">
+          <span></span>
+          <button class="link-btn" style="color:var(--danger)" onclick="removeAdminCategory(${ci})">Eliminar categoría</button>
+        </div>
+      `;
+    }
+
+    let codigoCatHtml = '';
+    if (cat.tipo !== 'peso'){
+      codigoCatHtml = `
+        <div class="admin-cat-codigo">
+          <label>Código de columna en la plantilla</label>
+          <input type="text" value="${cat.codigo || ''}" placeholder="Ej. PERFUM"
+            onchange="adminDraft[${ci}].codigo=this.value.trim().toUpperCase()">
+        </div>
+      `;
+    }
+
     block.innerHTML = `
       <div class="admin-cat-header">
         <div>
           <div class="cat-title">${cat.nombre}</div>
-          <div class="cat-type">${cat.tipo === 'peso' ? 'Se vende por peso (gramos)' : 'Precio fijo por producto'}</div>
+          <div class="cat-type">${tipoLabel}</div>
         </div>
       </div>
-      <div class="admin-items" id="adminItems-${ci}"></div>
-      <div class="cat-actions">
-        <button class="link-btn" onclick="addAdminItem(${ci})">+ Agregar ${cat.tipo === 'peso' ? 'tipo' : 'producto'}</button>
-        <button class="link-btn" style="color:var(--danger)" onclick="removeAdminCategory(${ci})">Eliminar categoría</button>
-      </div>
+      ${codigoCatHtml}
+      ${itemsHtml}
     `;
     wrap.appendChild(block);
-    renderAdminItems(ci);
+    if (cat.tipo !== 'manual') renderAdminItems(ci);
   });
 }
- 
+
 function renderAdminItems(catIndex){
   const wrap = document.getElementById('adminItems-' + catIndex);
+  if (!wrap) return;
   wrap.innerHTML = '';
   const cat = adminDraft[catIndex];
+  const esPeso = cat.tipo === 'peso';
+
   cat.items.forEach((item, ii) => {
     const row = document.createElement('div');
     row.className = 'admin-row';
-    row.innerHTML = `
-      <input type="text" value="${item.nombre}" placeholder="Nombre" onchange="adminDraft[${catIndex}].items[${ii}].nombre=this.value">
-      <input type="number" value="${item.precio}" placeholder="Precio" onchange="adminDraft[${catIndex}].items[${ii}].precio=parseFloat(this.value)||0">
-      <button onclick="removeAdminItem(${catIndex},${ii})">✕</button>
-    `;
+    if (esPeso){
+      row.innerHTML = `
+        <input type="text" value="${item.nombre}" placeholder="Nombre" onchange="adminDraft[${catIndex}].items[${ii}].nombre=this.value">
+        <input type="number" value="${item.precio}" placeholder="Precio/g" onchange="adminDraft[${catIndex}].items[${ii}].precio=parseFloat(this.value)||0">
+        <input type="text" value="${item.codigo || ''}" placeholder="Código" onchange="adminDraft[${catIndex}].items[${ii}].codigo=this.value.trim().toUpperCase()">
+        <button onclick="removeAdminItem(${catIndex},${ii})">✕</button>
+      `;
+    } else {
+      row.innerHTML = `
+        <input type="text" value="${item.nombre}" placeholder="Nombre" style="grid-column: span 2;" onchange="adminDraft[${catIndex}].items[${ii}].nombre=this.value">
+        <input type="number" value="${item.precio}" placeholder="Precio" onchange="adminDraft[${catIndex}].items[${ii}].precio=parseFloat(this.value)||0">
+        <button onclick="removeAdminItem(${catIndex},${ii})">✕</button>
+      `;
+    }
     wrap.appendChild(row);
   });
 }
- 
+
 function addAdminItem(catIndex){
-  adminDraft[catIndex].items.push({ nombre: '', precio: 0 });
+  const cat = adminDraft[catIndex];
+  const nuevo = cat.tipo === 'peso' ? { nombre:'', precio:0, codigo:'' } : { nombre:'', precio:0 };
+  cat.items.push(nuevo);
   renderAdminItems(catIndex);
 }
 function removeAdminItem(catIndex, itemIndex){
@@ -965,16 +1154,33 @@ function removeAdminCategory(catIndex){
 function addAdminCategory(){
   const nombre = prompt('Nombre de la nueva categoría (ej. Relojes):');
   if (!nombre) return;
-  const porPeso = confirm('¿Esta categoría se vende por peso en gramos?\n\nAceptar = por peso (como el oro)\nCancelar = precio fijo por producto (como los perfumes)');
-  adminDraft.push({ nombre: nombre.trim(), tipo: porPeso ? 'peso' : 'fijo', items: [] });
+
+  let tipo = '';
+  while (!['peso','fijo','manual'].includes(tipo)){
+    tipo = (prompt(
+      '¿Cómo se vende "' + nombre + '"?\n\n' +
+      'Escribe una de estas 3 palabras:\n' +
+      '"peso" — por gramos, como el oro\n' +
+      '"fijo" — precio fijo por producto, como los perfumes\n' +
+      '"manual" — monto y descripción libres, como reparaciones'
+    ) || '').trim().toLowerCase();
+    if (tipo === null) return;
+  }
+
+  const nuevaCat = { nombre: nombre.trim(), tipo, items: [] };
+  if (tipo !== 'peso'){
+    const codigo = prompt('Código de columna en tu plantilla para "' + nombre + '" (ej. TEJ):') || '';
+    nuevaCat.codigo = codigo.trim().toUpperCase();
+  }
+  adminDraft.push(nuevaCat);
   renderAdminCategories();
 }
- 
+
 async function saveAdminConfig(){
   const url = document.getElementById('scriptUrlInput').value.trim();
   const errEl = document.getElementById('adminSaveError');
   errEl.style.display = 'none';
- 
+
   if (!url){
     errEl.textContent = 'Pega la URL de Apps Script.';
     errEl.style.display = 'block';
@@ -983,11 +1189,16 @@ async function saveAdminConfig(){
   APPS_SCRIPT_URL = url;
   localStorage.setItem('dalias_script_url', url);
   updateConnectBanner();
- 
+
   const cleanCategorias = adminDraft
     .filter(c => c.nombre)
-    .map(c => ({ ...c, items: c.items.filter(i => i.nombre) }));
- 
+    .map(c => ({ ...c, items: (c.items || []).filter(i => i.nombre) }));
+
+  const btn = document.getElementById('saveAdminBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -1009,7 +1220,62 @@ async function saveAdminConfig(){
   }catch(err){
     errEl.textContent = 'No se pudo conectar con el Sheets.';
     errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
   }
+}
+
+async function cambiarPin(){
+  const pinActual = document.getElementById('pinActualInput').value;
+  const pinNuevo = document.getElementById('pinNuevoInput').value;
+  const errEl = document.getElementById('pinChangeError');
+  errEl.style.display = 'none';
+
+  if (!pinActual || !pinNuevo){
+    errEl.textContent = 'Completa ambos campos.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!APPS_SCRIPT_URL){
+    errEl.textContent = 'Conecta primero con Google Sheets.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('pinChangeBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Cambiando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'cambiarPin', pinActual, pinNuevo })
+    });
+    const data = await res.json();
+    if (data.success){
+      adminPinValue = pinNuevo;
+      document.getElementById('pinActualInput').value = '';
+      document.getElementById('pinNuevoInput').value = '';
+      showToast('Contraseña actualizada ✓');
+    } else {
+      errEl.textContent = data.error || 'No se pudo cambiar la contraseña.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Cambiar contraseña';
+  }
+}
+
+// Lee números aceptando coma o punto decimal (ej. "2,5" o "2.5")
+function parseNum(val){
+  if (val === null || val === undefined) return 0;
+  const n = parseFloat(String(val).replace(',', '.'));
+  return isNaN(n) ? 0 : n;
 }
 </script>
 </body>
