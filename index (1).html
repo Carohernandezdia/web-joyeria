@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DALIA'S · Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black: #0b0b0c;
+    --panel: #141416;
+    --panel-2: #1b1b1e;
+    --line: #2a2a2e;
+    --gold: #d4af37;
+    --gold-light: #f1dc9c;
+    --gold-deep: #a4791f;
+    --text: #f3f0e8;
+    --text-dim: #a8a49a;
+    --danger: #c0503f;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,.serif{ font-family:'Cormorant Garamond', serif; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #101011, #0b0b0c);
+    position: sticky; top:0; z-index: 20;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .mark{
+    width:40px; height:40px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold) 55%, var(--gold-deep) 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cormorant Garamond', serif; font-weight:700; color:#1a1305; font-size:20px;
+    box-shadow: 0 0 0 1px #000, 0 4px 14px rgba(212,175,55,.25);
+    overflow:hidden;
+  }
+  .brand .mark img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+  .brand .name{
+    font-size: 26px; font-weight: 700; letter-spacing: 0.5px;
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep));
+    -webkit-background-clip: text; background-clip:text; color: transparent;
+  }
+  .brand .sub{ font-size:11px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; margin-top:-2px;}
+
+  .vendor-field{ display:flex; flex-direction:column; }
+  .vendor-field label{ font-size:10px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;}
+  .vendor-field input{
+    background: var(--panel); border:1px solid var(--line); color: var(--text);
+    padding:8px 10px; border-radius:8px; font-size:14px; width:170px;
+  }
+
+  .connect-banner{
+    background: #241c08; border:1px solid var(--gold-deep); color: var(--gold-light);
+    font-size:13px; padding:10px 16px; text-align:center; display:none;
+  }
+  .connect-banner.show{ display:block; }
+  .connect-banner button{
+    background:none; border:1px solid var(--gold); color:var(--gold-light);
+    border-radius:6px; padding:3px 10px; margin-left:10px; cursor:pointer; font-size:12px;
+  }
+
+  .content{ max-width:1000px; margin:0 auto; padding: 22px 20px 110px; }
+
+  .tabs{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .tab{
+    padding:10px 18px; border-radius: 999px; border:1px solid var(--line);
+    background: var(--panel); color: var(--text-dim); cursor:pointer;
+    font-size:13px; letter-spacing:.5px; font-weight:600; text-transform:uppercase;
+    transition: all .15s;
+  }
+  .tab.active{
+    color:#171205; background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    border-color: var(--gold);
+  }
+
+  .item-grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr));
+    gap:16px;
+  }
+  .item-card{
+    background: linear-gradient(160deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px; cursor:pointer; position:relative; overflow:hidden;
+    transition: transform .15s, border-color .15s;
+  }
+  .item-card:hover{ transform: translateY(-3px); border-color: var(--gold); }
+  .item-card::after{
+    content:""; position:absolute; top:-40%; right:-30%; width:140px; height:140px;
+    background: radial-gradient(circle, rgba(212,175,55,.18), transparent 70%);
+  }
+  .item-card h3{ margin:0 0 4px; font-size:22px; color: var(--gold-light); }
+  .item-card .price{ font-size:13px; color: var(--text-dim); position:relative; }
+  .item-card .price b{ color: var(--gold); font-weight:600; }
+
+  .item-list-grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr));
+    gap:14px;
+  }
+  .item-list-card{
+    background: var(--panel); border:1px solid var(--line); border-radius: var(--radius);
+    padding:16px 18px; display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer; transition: border-color .15s, transform .15s;
+  }
+  .item-list-card:hover{ border-color: var(--gold); transform: translateY(-2px); }
+  .item-list-card .pname{ font-weight:600; font-size:15px; }
+  .item-list-card .pprice{ color: var(--gold); font-weight:600; font-size:14px; }
+
+  .manual-card{
+    background: linear-gradient(160deg, var(--panel-2), var(--panel));
+    border: 1px dashed var(--gold-deep); border-radius: var(--radius);
+    padding: 26px; cursor:pointer; text-align:center; max-width:320px;
+    transition: transform .15s, border-color .15s;
+  }
+  .manual-card:hover{ transform: translateY(-3px); border-color: var(--gold); }
+  .manual-card h3{ margin:0 0 6px; font-size:22px; color: var(--gold-light); }
+  .manual-card p{ margin:0; font-size:13px; color: var(--text-dim); }
+
+  .empty-msg{ color: var(--text-dim); font-size:14px; padding: 30px 20px; text-align:center; border:1px dashed var(--line); border-radius:var(--radius);}
+
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background: linear-gradient(0deg, #101011, #0b0b0cee);
+    border-top:1px solid var(--line);
+    display:flex; justify-content:center; gap: 40px;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  }
+  .nav-btn{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:none; border:none; color: var(--text-dim); cursor:pointer;
+    font-size:11px; letter-spacing:.5px; text-transform:uppercase; position:relative;
+  }
+  .nav-btn .nav-icon{
+    width:50px; height:50px; border-radius:50%; border:1px solid var(--line);
+    background: var(--panel); display:flex; align-items:center; justify-content:center;
+    font-size:22px; color: var(--gold); transition: border-color .15s, transform .15s;
+  }
+  .nav-btn:active .nav-icon{ transform: scale(.94); }
+  .nav-btn:hover .nav-icon{ border-color: var(--gold); }
+  .nav-badge{
+    position:absolute; top:-2px; right:6px; background: var(--gold); color:#1a1305;
+    font-size:11px; font-weight:800; border-radius:999px; min-width:18px; height:18px;
+    display:flex; align-items:center; justify-content:center; padding:0 4px;
+  }
+
+  .overlay{
+    position:fixed; inset:0; background: rgba(0,0,0,.65); backdrop-filter: blur(2px);
+    display:flex; align-items:flex-end; justify-content:center; z-index:100;
+  }
+  .overlay.center{ align-items:center; padding:16px; }
+  .overlay.hidden{ display:none; }
+  .sheet{
+    background: var(--panel); border:1px solid var(--line); border-top-left-radius:20px; border-top-right-radius:20px;
+    width:100%; max-width:520px; padding:24px; max-height:85vh; overflow-y:auto;
+  }
+  .modal{
+    background: var(--panel); border:1px solid var(--line); border-radius: var(--radius);
+    width:100%; max-width:420px; padding:26px; max-height:88vh; overflow-y:auto;
+  }
+  .sheet h3, .modal h3{ margin:0 0 18px; font-size:24px; color: var(--gold-light); }
+  .sheet-handle{ width:40px; height:4px; background: var(--line); border-radius:99px; margin: 0 auto 16px; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:11px; letter-spacing:1px; text-transform:uppercase; color: var(--text-dim); margin-bottom:6px;}
+  .field input, .field select, .field textarea{
+    width:100%; background: var(--panel-2); border:1px solid var(--line); color: var(--text);
+    padding:10px 12px; border-radius:8px; font-size:14px; font-family:inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color: var(--gold); }
+  .modal-actions{ display:flex; gap:10px; margin-top:20px; }
+  .modal-sub{ color: var(--text-dim); font-size:13px; margin: -10px 0 16px; }
+  .error-text{ color: var(--danger); font-size:13px; margin-top:-6px; margin-bottom:10px; display:none; }
+  .aviso-text{ color: var(--gold-light); font-size:12px; margin: 6px 0 0; }
+
+  .btn{
+    padding:13px 18px; border-radius:10px; border:none; cursor:pointer;
+    font-weight:700; font-size:14px; letter-spacing:.5px; text-transform:uppercase;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-block{ width:100%; }
+  .btn-gold{ background: linear-gradient(180deg, var(--gold-light), var(--gold)); color:#1a1305; }
+  .btn-gold:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(212,175,55,.25); }
+  .btn-gold:disabled{ opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+  .btn-ghost{ background:transparent; border:1px solid var(--line); color: var(--text-dim); }
+  .btn-ghost:hover{ border-color: var(--gold); color: var(--gold); }
+  .btn-danger{ background:transparent; border:1px solid var(--danger); color: var(--danger); }
+
+  .cart-items{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .cart-item{
+    background: var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; font-size:13px; position:relative;
+  }
+  .cart-item .ci-top{ display:flex; justify-content:space-between; font-weight:600; margin-bottom:3px; padding-right:44px;}
+  .cart-item .ci-detail{ color: var(--text-dim); font-size:12px; line-height:1.5;}
+  .cart-item .ci-edit, .cart-item .ci-remove{
+    position:absolute; top:8px; background:none; border:none; color: var(--text-dim);
+    cursor:pointer; font-size:14px;
+  }
+  .cart-item .ci-edit{ right:32px; }
+  .cart-item .ci-remove{ right:8px; }
+  .cart-item .ci-edit:hover{ color: var(--gold); }
+  .cart-item .ci-remove:hover{ color: var(--danger); }
+  .cart-total{
+    border-top:1px solid var(--line); padding-top:12px; display:flex; justify-content:space-between;
+    font-size:16px; font-weight:700; margin-bottom:16px;
+  }
+  .cart-total b{ color: var(--gold); }
+
+  .admin-section{ border-top:1px solid var(--line); margin-top:18px; padding-top:16px; }
+  .admin-section h4{ margin:0 0 10px; font-size:16px; color: var(--gold-light); font-weight:600; }
+  .admin-cat-block{ background: var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; }
+  .admin-cat-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .admin-cat-header .cat-title{ font-weight:700; color: var(--gold-light); font-size:15px; }
+  .admin-cat-header .cat-type{ font-size:11px; color: var(--text-dim); text-transform:uppercase; }
+  .admin-item-card{ background: var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px; }
+  .admin-item-row{ display:flex; gap:8px; align-items:center; }
+  .admin-item-row + .admin-item-row{ margin-top:8px; }
+  .admin-item-row > div{ flex:1; min-width:0; }
+  .admin-item-row input{ width:100%; min-width:0; background: var(--panel-2); border:1px solid var(--line); color:var(--text); padding:8px; border-radius:6px; font-size:13px; box-sizing:border-box; }
+  .admin-item-row button{ flex:0 0 auto; background:none; border:none; color: var(--text-dim); cursor:pointer; font-size:16px; }
+  .admin-item-row button:hover{ color: var(--danger); }
+  .admin-item-label{ font-size:10px; color: var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; display:block; }
+  .admin-cat-codigo{ margin-bottom:10px; }
+  .admin-cat-codigo label{ font-size:10px; letter-spacing:1px; text-transform:uppercase; color: var(--text-dim); display:block; margin-bottom:4px; }
+  .admin-cat-codigo input{ background: var(--panel); border:1px solid var(--line); color:var(--text); padding:7px 10px; border-radius:6px; font-size:13px; width:100%; max-width:220px; box-sizing:border-box; }
+  .link-btn{ background:none; border:none; color: var(--gold); cursor:pointer; font-size:13px; padding:0; text-align:left; }
+  .cat-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
+
+  .toast{
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+    background: var(--panel); border:1px solid var(--gold); color: var(--text);
+    padding:12px 20px; border-radius:10px; font-size:14px; z-index:200;
+    opacity:0; pointer-events:none; transition:opacity .25s;
+  }
+  .toast.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark" id="logoMark">D</div>
+    <div>
+      <div class="name">DALIA'S</div>
+      <div class="sub">Joyería · Ventas</div>
+    </div>
+  </div>
+  <div class="vendor-field">
+    <label>Vendedor</label>
+    <input id="vendorInput" placeholder="Tu nombre">
+  </div>
+</header>
+
+<div class="connect-banner" id="connectBanner">
+  Esta app aún no está conectada a tu Google Sheets.
+  <button onclick="openAdminFromBanner()">Conectar ahora</button>
+</div>
+
+<div class="content">
+  <div class="tabs" id="categoryTabs"></div>
+  <div id="categoryContent"></div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn" id="cartNavBtn">
+    <span class="nav-icon">🛒<span class="nav-badge" id="cartBadge" style="display:none;">0</span></span>
+    Carrito
+  </button>
+  <button class="nav-btn" id="abonosNavBtn">
+    <span class="nav-icon">💰</span>
+    Abonos
+  </button>
+  <button class="nav-btn" id="settingsNavBtn">
+    <span class="nav-icon">⚙</span>
+    Configuración
+  </button>
+</nav>
+
+<!-- Sheet: agregar item tipo peso (oro) -->
+<div class="overlay hidden" id="overlayPeso">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="pesoModalTitle">Oro</h3>
+    <div class="modal-sub" id="pesoModalPrice"></div>
+    <div class="field">
+      <label>Peso (gramos)</label>
+      <input type="number" id="pesoValor" step="0.01" min="0" placeholder="Ej. 3.5">
+    </div>
+    <div class="field">
+      <label>Especificación de la joya</label>
+      <textarea id="pesoEspec" rows="2" placeholder="Ej. Anillo trenzado talla 7"></textarea>
+    </div>
+    <div class="field">
+      <label>Descuento (%)</label>
+      <input type="number" id="pesoDescuento" step="1" min="0" max="100" value="0">
+    </div>
+    <div class="modal-sub" id="pesoSubtotalPreview">Subtotal: $ 0</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeItemModal('overlayPeso')">Cancelar</button>
+      <button class="btn btn-gold" style="flex:1" id="pesoConfirmBtn" onclick="addPesoToCart()">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: agregar item tipo fijo (perfumes, tejido, etc) -->
+<div class="overlay hidden" id="overlayFijo">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="fijoModalTitle">Producto</h3>
+    <div class="modal-sub" id="fijoModalPrice"></div>
+    <div class="field">
+      <label>Cantidad</label>
+      <input type="number" id="fijoCantidad" min="1" value="1">
+    </div>
+    <div class="field">
+      <label>Descuento (%)</label>
+      <input type="number" id="fijoDescuento" step="1" min="0" max="100" value="0">
+    </div>
+    <div class="modal-sub" id="fijoSubtotalPreview">Subtotal: $ 0</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeItemModal('overlayFijo')">Cancelar</button>
+      <button class="btn btn-gold" style="flex:1" id="fijoConfirmBtn" onclick="addFijoToCart()">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: agregar item tipo manual (reparaciones) -->
+<div class="overlay hidden" id="overlayManual">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="manualModalTitle">Reparaciones</h3>
+    <div class="field">
+      <label>Costo</label>
+      <input type="number" id="manualMonto" min="0" step="1000" placeholder="Ej. 30000">
+    </div>
+    <div class="field">
+      <label>Especificación</label>
+      <textarea id="manualEspec" rows="2" placeholder="Ej. Cambio de broche pulsera"></textarea>
+    </div>
+    <div class="field">
+      <label>Descuento (%)</label>
+      <input type="number" id="manualDescuento" step="1" min="0" max="100" value="0">
+    </div>
+    <div class="modal-sub" id="manualSubtotalPreview">Subtotal: $ 0</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeItemModal('overlayManual')">Cancelar</button>
+      <button class="btn btn-gold" style="flex:1" id="manualConfirmBtn" onclick="addManualToCart()">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: carrito -->
+<div class="overlay hidden" id="overlayCart">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🛒 Carrito</h3>
+    <div class="cart-items" id="cartItems">
+      <div class="empty-msg" id="cartEmpty">Aún no hay artículos</div>
+    </div>
+    <div class="cart-total">
+      <span>Total</span>
+      <b id="cartTotal">$ 0</b>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('overlayCart')">Seguir vendiendo</button>
+      <button class="btn btn-gold" style="flex:1" id="checkoutBtn" disabled onclick="openCheckout()">Finalizar venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: checkout -->
+<div class="overlay center hidden" id="overlayCheckout">
+  <div class="modal">
+    <h3>Finalizar venta</h3>
+    <div class="field">
+      <label>N° de factura</label>
+      <input type="text" id="facturaNum" placeholder="Ej. 00123">
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="facturaEstado">
+        <option value="Vendida">Vendida</option>
+        <option value="Separada">Separada</option>
+      </select>
+    </div>
+    <div class="field" id="abonoField" style="display:none;">
+      <label>Abono</label>
+      <input type="number" id="abonoInicial" min="0" step="1000" placeholder="Ej. 200000">
+    </div>
+    <div class="error-text" id="checkoutError">Escribe el número de factura.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('overlayCheckout')">Cancelar</button>
+      <button class="btn btn-gold" style="flex:1" id="confirmCheckoutBtn" onclick="confirmCheckout()">Confirmar venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: abonos -->
+<div class="overlay center hidden" id="overlayAbonos">
+  <div class="modal">
+    <h3>💰 Abonos</h3>
+    <div class="field">
+      <label>N° de factura</label>
+      <input type="text" id="abonoFactura" placeholder="Ej. 00123">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('overlayAbonos')">Cerrar</button>
+      <button class="btn btn-gold" style="flex:1" id="buscarFacturaBtn" onclick="buscarFacturaAbono()">Buscar</button>
+    </div>
+    <div id="abonoResultado" style="display:none; margin-top:18px;">
+      <div class="modal-sub" id="abonoInfo" style="margin-top:0; line-height:1.7;"></div>
+      <div class="field">
+        <label>Monto a abonar</label>
+        <input type="number" id="abonoMonto" min="0" step="1000" placeholder="Ej. 50000">
+      </div>
+      <div class="error-text" id="abonoError"></div>
+      <button class="btn btn-gold btn-block" id="registrarAbonoBtn" onclick="registrarAbonoBtn()">Registrar abono</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: admin -->
+<div class="overlay center hidden" id="overlayAdmin">
+  <div class="modal">
+    <div id="adminPinView">
+      <h3>Configuración</h3>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="adminPin" placeholder="••••">
+      </div>
+      <div class="error-text" id="adminPinError">Contraseña incorrecta.</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('overlayAdmin')">Cancelar</button>
+        <button class="btn btn-gold" style="flex:1" onclick="checkAdminPin()">Entrar</button>
+      </div>
+    </div>
+
+    <div id="adminConfigView" style="display:none;">
+      <h3>Precios y categorías</h3>
+      <div id="adminCategories"></div>
+      <button class="link-btn" onclick="addAdminCategory()">+ Agregar categoría nueva</button>
+
+      <div class="admin-section">
+        <h4>Conexión con Google Sheets</h4>
+        <div class="field">
+          <label>URL de Apps Script</label>
+          <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+      </div>
+
+      <div class="error-text" id="adminSaveError">No se pudo guardar. Verifica la conexión.</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('overlayAdmin')">Cerrar</button>
+        <button class="btn btn-gold" style="flex:1" id="saveAdminBtn" onclick="saveAdminConfig()">Guardar cambios</button>
+      </div>
+
+      <div class="admin-section">
+        <h4>Cambiar contraseña</h4>
+        <div class="field">
+          <label>Contraseña actual</label>
+          <input type="password" id="pinActualInput" placeholder="••••">
+        </div>
+        <div class="field">
+          <label>Contraseña nueva</label>
+          <input type="password" id="pinNuevoInput" placeholder="••••">
+        </div>
+        <div class="error-text" id="pinChangeError"></div>
+        <button class="btn btn-ghost btn-block" id="pinChangeBtn" onclick="cambiarPin()">Cambiar contraseña</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================
+   Configura la conexión con tu Google Sheets desde el ícono
+   ⚙ Configuración dentro de la app (con la contraseña).
+   ========================================================== */
+let APPS_SCRIPT_URL = localStorage.getItem('dalias_script_url') || '';
+
+let categorias = [
+  { nombre: 'Oro', tipo: 'peso', items: [
+    { nombre: 'Italiano', precio: 0, codigo: 'ITALY' },
+    { nombre: 'Zaragozano', precio: 0, codigo: 'ZA/ZA' },
+    { nombre: 'Personalizado', precio: 0, codigo: 'PERSO' },
+    { nombre: 'Nacional', precio: 0, codigo: 'NAC' }
+  ]},
+  { nombre: 'Perfumes', tipo: 'fijo', codigo: 'PERFUM', items: [] },
+  { nombre: 'Reparaciones', tipo: 'manual', codigo: 'REPAR', items: [] },
+  { nombre: 'Tejido', tipo: 'fijo', codigo: 'TEJ', items: [{ nombre: 'Tejido', precio: 0 }] }
+];
+let activeCatIndex = 0;
+let cart = [];
+let selectedItem = null; // { catIndex, itemIndex }
+let editingIndex = null; // índice en cart[] que se está editando (null = agregar nuevo)
+
+// ---------- Helpers ----------
+function fmt(n){ return '$ ' + Number(n || 0).toLocaleString('es-CO', {maximumFractionDigits:0}); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function getVendor(){ return document.getElementById('vendorInput').value.trim(); }
+function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+function closeItemModal(id){ editingIndex = null; closeModal(id); }
+
+// ---------- Init ----------
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('vendorInput').value = localStorage.getItem('dalias_vendor') || '';
+  document.getElementById('vendorInput').addEventListener('input', e => {
+    localStorage.setItem('dalias_vendor', e.target.value);
+  });
+
+  document.getElementById('cartNavBtn').addEventListener('click', () => openModal('overlayCart'));
+  document.getElementById('abonosNavBtn').addEventListener('click', openAbonos);
+  document.getElementById('settingsNavBtn').addEventListener('click', openAdmin);
+
+  document.getElementById('facturaEstado').addEventListener('change', function(){
+    const campo = document.getElementById('abonoField');
+    if (this.value === 'Separada'){
+      campo.style.display = 'block';
+    } else {
+      campo.style.display = 'none';
+      document.getElementById('abonoInicial').value = '';
+    }
+  });
+
+  renderTabs();
+  renderCategoryContent();
+  updateConnectBanner();
+  if (APPS_SCRIPT_URL) loadConfig();
+});
+
+function updateConnectBanner(){
+  document.getElementById('connectBanner').classList.toggle('show', !APPS_SCRIPT_URL);
+}
+function openAdminFromBanner(){ openAdmin(); }
+
+// ---------- Cargar config desde Apps Script ----------
+async function loadConfig(){
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=config');
+    const data = await res.json();
+    if (data.categorias && data.categorias.length){
+      categorias = data.categorias;
+      if (activeCatIndex >= categorias.length) activeCatIndex = 0;
+    }
+    renderTabs();
+    renderCategoryContent();
+  }catch(err){
+    showToast('No se pudo cargar la configuración. Revisa la conexión.');
+  }
+}
+
+// ---------- Tabs y contenido por categoría ----------
+function renderTabs(){
+  const wrap = document.getElementById('categoryTabs');
+  wrap.innerHTML = '';
+  categorias.forEach((cat, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (i === activeCatIndex ? ' active' : '');
+    btn.textContent = cat.nombre;
+    btn.addEventListener('click', () => {
+      activeCatIndex = i;
+      renderTabs();
+      renderCategoryContent();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function renderCategoryContent(){
+  const container = document.getElementById('categoryContent');
+  container.innerHTML = '';
+  const cat = categorias[activeCatIndex];
+  if (!cat){
+    container.innerHTML = '<div class="empty-msg">No hay categorías configuradas todavía.</div>';
+    return;
+  }
+
+  if (cat.tipo === 'manual'){
+    const card = document.createElement('div');
+    card.className = 'manual-card';
+    card.innerHTML = `<h3>${cat.nombre}</h3><p>Toca para registrar el costo y la especificación</p>`;
+    card.addEventListener('click', () => openManualModal(activeCatIndex));
+    container.appendChild(card);
+    return;
+  }
+
+  if (!cat.items || !cat.items.length){
+    container.innerHTML = `<div class="empty-msg">Aún no hay artículos en "${cat.nombre}". Agrégalos desde ⚙ Configuración.</div>`;
+    return;
+  }
+
+  if (cat.tipo === 'peso'){
+    const grid = document.createElement('div');
+    grid.className = 'item-grid';
+    cat.items.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `<h3>${item.nombre}</h3><div class="price">Precio/g: <b>${fmt(item.precio)}</b></div>`;
+      card.addEventListener('click', () => openPesoModal(activeCatIndex, i));
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'item-list-grid';
+    cat.items.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = 'item-list-card';
+      card.innerHTML = `<span class="pname">${item.nombre}</span><span class="pprice">${fmt(item.precio)}</span>`;
+      card.addEventListener('click', () => openFijoModal(activeCatIndex, i));
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  }
+}
+
+// ---------- Modal tipo peso ----------
+function openPesoModal(catIndex, itemIndex){
+  editingIndex = null;
+  selectedItem = { catIndex, itemIndex };
+  const cat = categorias[catIndex]; const item = cat.items[itemIndex];
+  document.getElementById('pesoModalTitle').textContent = cat.nombre + ' — ' + item.nombre;
+  document.getElementById('pesoModalPrice').textContent = 'Precio por gramo: ' + fmt(item.precio);
+  document.getElementById('pesoValor').value = '';
+  document.getElementById('pesoEspec').value = '';
+  document.getElementById('pesoDescuento').value = 0;
+  document.getElementById('pesoConfirmBtn').textContent = 'Agregar al carrito';
+  updatePesoPreview();
+  openModal('overlayPeso');
+}
+['pesoValor','pesoDescuento'].forEach(id => {
+  document.addEventListener('input', e => { if (e.target.id === id) updatePesoPreview(); });
+});
+function updatePesoPreview(){
+  if (!selectedItem) return;
+  const cat = categorias[selectedItem.catIndex];
+  if (!cat) return;
+  const item = cat.items[selectedItem.itemIndex];
+  if (!item) return;
+  const peso = parseNum(document.getElementById('pesoValor').value);
+  const desc = parseNum(document.getElementById('pesoDescuento').value);
+  const total = peso * item.precio * (1 - desc/100);
+  document.getElementById('pesoSubtotalPreview').textContent = 'Subtotal: ' + fmt(total);
+}
+function addPesoToCart(){
+  const cat = categorias[selectedItem.catIndex]; const item = cat.items[selectedItem.itemIndex];
+  const peso = parseNum(document.getElementById('pesoValor').value);
+  const espec = document.getElementById('pesoEspec').value.trim();
+  const desc = parseNum(document.getElementById('pesoDescuento').value);
+  if (!peso || peso <= 0){ showToast('Escribe un peso válido.'); return; }
+  if (!espec){ showToast('Escribe la especificación de la joya.'); return; }
+
+  const total = Math.round(peso * item.precio * (1 - desc/100));
+  const nuevoItem = {
+    categoria: cat.nombre, tipoOroOProducto: item.nombre,
+    peso, especificacion: espec, precioUnitario: item.precio,
+    descuento: desc, total, vendedor: getVendor(),
+    catIndex: selectedItem.catIndex, itemIndex: selectedItem.itemIndex
+  };
+
+  if (editingIndex !== null){
+    cart[editingIndex] = nuevoItem;
+    editingIndex = null;
+  } else {
+    cart.push(nuevoItem);
+  }
+  closeModal('overlayPeso');
+  renderCartBadge();
+  showToast('Guardado en el carrito');
+}
+
+// ---------- Modal tipo fijo ----------
+function openFijoModal(catIndex, itemIndex){
+  editingIndex = null;
+  selectedItem = { catIndex, itemIndex };
+  const cat = categorias[catIndex]; const item = cat.items[itemIndex];
+  document.getElementById('fijoModalTitle').textContent = item.nombre;
+  document.getElementById('fijoModalPrice').textContent = 'Precio: ' + fmt(item.precio);
+  document.getElementById('fijoCantidad').value = 1;
+  document.getElementById('fijoDescuento').value = 0;
+  document.getElementById('fijoConfirmBtn').textContent = 'Agregar al carrito';
+  updateFijoPreview();
+  openModal('overlayFijo');
+}
+['fijoCantidad','fijoDescuento'].forEach(id => {
+  document.addEventListener('input', e => { if (e.target.id === id) updateFijoPreview(); });
+});
+function updateFijoPreview(){
+  if (!selectedItem) return;
+  const cat = categorias[selectedItem.catIndex];
+  if (!cat) return;
+  const item = cat.items[selectedItem.itemIndex];
+  if (!item) return;
+  const cant = parseNum(document.getElementById('fijoCantidad').value);
+  const desc = parseNum(document.getElementById('fijoDescuento').value);
+  const total = cant * item.precio * (1 - desc/100);
+  document.getElementById('fijoSubtotalPreview').textContent = 'Subtotal: ' + fmt(total);
+}
+function addFijoToCart(){
+  const cat = categorias[selectedItem.catIndex]; const item = cat.items[selectedItem.itemIndex];
+  const cant = parseNum(document.getElementById('fijoCantidad').value);
+  const desc = parseNum(document.getElementById('fijoDescuento').value);
+  if (!cant || cant <= 0){ showToast('Escribe una cantidad válida.'); return; }
+
+  const total = Math.round(cant * item.precio * (1 - desc/100));
+  const nuevoItem = {
+    categoria: cat.nombre, tipoOroOProducto: item.nombre + (cant > 1 ? ' x' + cant : ''),
+    peso: '', especificacion: '', precioUnitario: item.precio,
+    descuento: desc, total, vendedor: getVendor(),
+    catIndex: selectedItem.catIndex, itemIndex: selectedItem.itemIndex, cantidad: cant
+  };
+
+  if (editingIndex !== null){
+    cart[editingIndex] = nuevoItem;
+    editingIndex = null;
+  } else {
+    cart.push(nuevoItem);
+  }
+  closeModal('overlayFijo');
+  renderCartBadge();
+  showToast('Guardado en el carrito');
+}
+
+// ---------- Modal tipo manual (reparaciones) ----------
+function openManualModal(catIndex){
+  editingIndex = null;
+  selectedItem = { catIndex, itemIndex: null };
+  const cat = categorias[catIndex];
+  document.getElementById('manualModalTitle').textContent = cat.nombre;
+  document.getElementById('manualMonto').value = '';
+  document.getElementById('manualEspec').value = '';
+  document.getElementById('manualDescuento').value = 0;
+  document.getElementById('manualConfirmBtn').textContent = 'Agregar al carrito';
+  updateManualPreview();
+  openModal('overlayManual');
+}
+['manualMonto','manualDescuento'].forEach(id => {
+  document.addEventListener('input', e => { if (e.target.id === id) updateManualPreview(); });
+});
+function updateManualPreview(){
+  const monto = parseNum(document.getElementById('manualMonto').value);
+  const desc = parseNum(document.getElementById('manualDescuento').value);
+  const total = monto * (1 - desc/100);
+  document.getElementById('manualSubtotalPreview').textContent = 'Subtotal: ' + fmt(total);
+}
+function addManualToCart(){
+  const cat = categorias[selectedItem.catIndex];
+  const monto = parseNum(document.getElementById('manualMonto').value);
+  const espec = document.getElementById('manualEspec').value.trim();
+  const desc = parseNum(document.getElementById('manualDescuento').value);
+  if (!monto || monto <= 0){ showToast('Escribe un costo válido.'); return; }
+  if (!espec){ showToast('Escribe la especificación.'); return; }
+
+  const total = Math.round(monto * (1 - desc/100));
+  const nuevoItem = {
+    categoria: cat.nombre, tipoOroOProducto: cat.nombre,
+    peso: '', especificacion: espec, precioUnitario: monto,
+    descuento: desc, total, vendedor: getVendor(),
+    catIndex: selectedItem.catIndex, itemIndex: null
+  };
+
+  if (editingIndex !== null){
+    cart[editingIndex] = nuevoItem;
+    editingIndex = null;
+  } else {
+    cart.push(nuevoItem);
+  }
+  closeModal('overlayManual');
+  renderCartBadge();
+  showToast('Guardado en el carrito');
+}
+
+// ---------- Carrito ----------
+function renderCartBadge(){
+  const badge = document.getElementById('cartBadge');
+  if (cart.length){
+    badge.style.display = 'flex';
+    badge.textContent = cart.length;
+  } else {
+    badge.style.display = 'none';
+  }
+  renderCartSheet();
+}
+function renderCartSheet(){
+  const container = document.getElementById('cartItems');
+  container.innerHTML = '';
+  if (!cart.length){
+    container.innerHTML = '<div class="empty-msg" id="cartEmpty">Aún no hay artículos</div>';
+  } else {
+    cart.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'cart-item';
+      const detail = item.peso
+        ? `${item.peso} g · ${item.especificacion}${item.descuento ? ' · -' + item.descuento + '%' : ''}`
+        : (item.especificacion
+            ? `${item.especificacion}${item.descuento ? ' · -' + item.descuento + '%' : ''}`
+            : `${item.descuento ? '-' + item.descuento + '% dcto.' : 'Sin descuento'}`);
+      div.innerHTML = `
+        <button class="ci-edit" onclick="editCartItem(${i})" title="Editar">✎</button>
+        <button class="ci-remove" onclick="removeFromCart(${i})" title="Eliminar">✕</button>
+        <div class="ci-top"><span>${item.tipoOroOProducto}</span><span>${fmt(item.total)}</span></div>
+        <div class="ci-detail">${item.categoria} · ${detail}${item.vendedor ? ' · ' + item.vendedor : ''}</div>
+      `;
+      container.appendChild(div);
+    });
+  }
+  const total = cart.reduce((s,i)=>s+i.total, 0);
+  document.getElementById('cartTotal').textContent = fmt(total);
+  document.getElementById('checkoutBtn').disabled = cart.length === 0;
+}
+function removeFromCart(i){
+  cart.splice(i,1);
+  renderCartBadge();
+}
+function editCartItem(i){
+  const item = cart[i];
+  const cat = categorias[item.catIndex];
+
+  if (!cat){
+    showToast('Esa categoría ya no existe. Elimínalo y agrégalo de nuevo.');
+    return;
+  }
+
+  editingIndex = i;
+  selectedItem = { catIndex: item.catIndex, itemIndex: item.itemIndex };
+
+  if (cat.tipo === 'manual'){
+    document.getElementById('manualModalTitle').textContent = cat.nombre;
+    document.getElementById('manualMonto').value = item.precioUnitario;
+    document.getElementById('manualEspec').value = item.especificacion;
+    document.getElementById('manualDescuento').value = item.descuento;
+    document.getElementById('manualConfirmBtn').textContent = 'Guardar cambios';
+    updateManualPreview();
+    closeModal('overlayCart');
+    openModal('overlayManual');
+    return;
+  }
+
+  if (!cat.items[item.itemIndex]){
+    showToast('Ese producto ya no existe en el catálogo actual. Elimínalo y agrégalo de nuevo.');
+    return;
+  }
+  const catalogItem = cat.items[item.itemIndex];
+
+  if (cat.tipo === 'peso'){
+    document.getElementById('pesoModalTitle').textContent = cat.nombre + ' — ' + catalogItem.nombre;
+    document.getElementById('pesoModalPrice').textContent = 'Precio por gramo: ' + fmt(catalogItem.precio);
+    document.getElementById('pesoValor').value = item.peso;
+    document.getElementById('pesoEspec').value = item.especificacion;
+    document.getElementById('pesoDescuento').value = item.descuento;
+    document.getElementById('pesoConfirmBtn').textContent = 'Guardar cambios';
+    updatePesoPreview();
+    closeModal('overlayCart');
+    openModal('overlayPeso');
+  } else {
+    document.getElementById('fijoModalTitle').textContent = catalogItem.nombre;
+    document.getElementById('fijoModalPrice').textContent = 'Precio: ' + fmt(catalogItem.precio);
+    document.getElementById('fijoCantidad').value = item.cantidad || 1;
+    document.getElementById('fijoDescuento').value = item.descuento;
+    document.getElementById('fijoConfirmBtn').textContent = 'Guardar cambios';
+    updateFijoPreview();
+    closeModal('overlayCart');
+    openModal('overlayFijo');
+  }
+}
+
+// ---------- Checkout ----------
+function openCheckout(){
+  document.getElementById('checkoutError').style.display = 'none';
+  document.getElementById('facturaNum').value = '';
+  document.getElementById('facturaEstado').value = 'Vendida';
+  document.getElementById('abonoInicial').value = '';
+  document.getElementById('abonoField').style.display = 'none';
+  openModal('overlayCheckout');
+}
+async function confirmCheckout(){
+  const factura = document.getElementById('facturaNum').value.trim();
+  const estado = document.getElementById('facturaEstado').value;
+  const errEl = document.getElementById('checkoutError');
+  if (!factura){ errEl.style.display = 'block'; return; }
+
+  const abono = estado === 'Separada'
+    ? parseNum(document.getElementById('abonoInicial').value)
+    : 0;
+
+  if (estado === 'Separada' && abono <= 0){
+    showToast('Indica con cuánto se separó la joya.');
+    return;
+  }
+
+  errEl.style.display = 'none';
+
+  if (!APPS_SCRIPT_URL){
+    showToast('Conecta primero con Google Sheets desde ⚙️ Configuración.');
+    return;
+  }
+
+  const btn = document.getElementById('confirmCheckoutBtn');
+  if (btn.disabled) return; // evita doble clic
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  const venta = cart.map(item => ({
+    ...item,
+    factura,
+    estado,
+    abono,
+    vendedor: item.vendedor || getVendor()
+  }));
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'registrarVenta', venta })
+    });
+    const data = await res.json();
+    if (data.success){
+      cart = [];
+      renderCartBadge();
+      closeModal('overlayCheckout');
+      closeModal('overlayCart');
+      showToast('Venta registrada ✓');
+    } else {
+      showToast('Error: ' + (data.error || 'no se pudo registrar'));
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Confirmar venta';
+  }
+}
+
+// ---------- Abonos ----------
+function openAbonos(){
+  document.getElementById('abonoFactura').value = '';
+  document.getElementById('abonoMonto').value = '';
+  document.getElementById('abonoResultado').style.display = 'none';
+  document.getElementById('abonoError').style.display = 'none';
+  openModal('overlayAbonos');
+}
+async function buscarFacturaAbono(){
+  const factura = document.getElementById('abonoFactura').value.trim();
+  if (!factura){ showToast('Escribe el número de factura.'); return; }
+  if (!APPS_SCRIPT_URL){ showToast('Conecta primero con Google Sheets.'); return; }
+
+  const btn = document.getElementById('buscarFacturaBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'buscarFactura', factura })
+    });
+    const data = await res.json();
+    if (!data.success || !data.encontrada){
+      showToast(data.error || 'No se encontró esa factura.');
+      document.getElementById('abonoResultado').style.display = 'none';
+      return;
+    }
+    document.getElementById('abonoInfo').innerHTML =
+      `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
+      (data.aviso ? `<div class="aviso-text">${data.aviso}</div>` : '');
+    document.getElementById('abonoResultado').style.display = 'block';
+    document.getElementById('abonoError').style.display = 'none';
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Buscar';
+  }
+}
+async function registrarAbonoBtn(){
+  const factura = document.getElementById('abonoFactura').value.trim();
+  const monto = parseNum(document.getElementById('abonoMonto').value);
+  const errEl = document.getElementById('abonoError');
+  errEl.style.display = 'none';
+
+  if (!monto || monto <= 0){
+    errEl.textContent = 'Escribe un monto válido.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Bloqueo contra doble clic / clics repetidos mientras se envía.
+  const btn = document.getElementById('registrarAbonoBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'registrarAbono', factura, monto })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Abono registrado ✓' + (data.estado === 'Vendida' ? ' · Factura saldada' : ''));
+      closeModal('overlayAbonos');
+    } else {
+      errEl.textContent = data.error || 'No se pudo registrar el abono.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Registrar abono';
+  }
+}
+
+// ---------- Admin ----------
+let adminDraft = null; // copia editable de categorias mientras está abierto el panel
+let adminPinValue = '';
+
+function openAdmin(){
+  document.getElementById('adminPinView').style.display = 'block';
+  document.getElementById('adminConfigView').style.display = 'none';
+  document.getElementById('adminPin').value = '';
+  document.getElementById('adminPinError').style.display = 'none';
+  openModal('overlayAdmin');
+}
+
+function checkAdminPin(){
+  adminPinValue = document.getElementById('adminPin').value;
+  // El PIN se valida de verdad en el servidor al guardar; esto solo
+  // evita que cualquiera vea el panel por accidente.
+  document.getElementById('adminPinView').style.display = 'none';
+  document.getElementById('adminConfigView').style.display = 'block';
+
+  adminDraft = JSON.parse(JSON.stringify(categorias));
+  document.getElementById('scriptUrlInput').value = APPS_SCRIPT_URL;
+  document.getElementById('pinActualInput').value = '';
+  document.getElementById('pinNuevoInput').value = '';
+  document.getElementById('pinChangeError').style.display = 'none';
+  renderAdminCategories();
+}
+
+function renderAdminCategories(){
+  const wrap = document.getElementById('adminCategories');
+  wrap.innerHTML = '';
+  adminDraft.forEach((cat, ci) => {
+    const block = document.createElement('div');
+    block.className = 'admin-cat-block';
+
+    const tipoLabel = cat.tipo === 'peso'
+      ? 'Se vende por peso (gramos)'
+      : (cat.tipo === 'manual' ? 'Monto y especificación manual' : 'Precio fijo por producto');
+
+    let itemsHtml = '';
+    if (cat.tipo !== 'manual'){
+      itemsHtml = `
+        <div class="admin-items" id="adminItems-${ci}"></div>
+        <div class="cat-actions">
+          <button class="link-btn" onclick="addAdminItem(${ci})">+ Agregar ${cat.tipo === 'peso' ? 'tipo' : 'producto'}</button>
+          <button class="link-btn" style="color:var(--danger)" onclick="removeAdminCategory(${ci})">Eliminar categoría</button>
+        </div>
+      `;
+    } else {
+      itemsHtml = `
+        <div class="cat-actions">
+          <span></span>
+          <button class="link-btn" style="color:var(--danger)" onclick="removeAdminCategory(${ci})">Eliminar categoría</button>
+        </div>
+      `;
+    }
+
+    let codigoCatHtml = '';
+    if (cat.tipo !== 'peso'){
+      codigoCatHtml = `
+        <div class="admin-cat-codigo">
+          <label>Código de columna en la plantilla</label>
+          <input type="text" value="${cat.codigo || ''}" placeholder="Ej. PERFUM"
+            onchange="adminDraft[${ci}].codigo=this.value.trim().toUpperCase()">
+        </div>
+      `;
+    }
+
+    block.innerHTML = `
+      <div class="admin-cat-header">
+        <div>
+          <div class="cat-title">${cat.nombre}</div>
+          <div class="cat-type">${tipoLabel}</div>
+        </div>
+      </div>
+      ${codigoCatHtml}
+      ${itemsHtml}
+    `;
+    wrap.appendChild(block);
+    if (cat.tipo !== 'manual') renderAdminItems(ci);
+  });
+}
+
+function renderAdminItems(catIndex){
+  const wrap = document.getElementById('adminItems-' + catIndex);
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const cat = adminDraft[catIndex];
+  const esPeso = cat.tipo === 'peso';
+
+  cat.items.forEach((item, ii) => {
+    const row = document.createElement('div');
+    row.className = 'admin-item-card';
+    if (esPeso){
+      row.innerHTML = `
+        <div class="admin-item-row">
+          <div><input type="text" value="${item.nombre}" placeholder="Nombre" onchange="adminDraft[${catIndex}].items[${ii}].nombre=this.value"></div>
+          <button onclick="removeAdminItem(${catIndex},${ii})">✕</button>
+        </div>
+        <div class="admin-item-row">
+          <div>
+            <span class="admin-item-label">Precio/g</span>
+            <input type="number" value="${item.precio}" onchange="adminDraft[${catIndex}].items[${ii}].precio=parseFloat(this.value)||0">
+          </div>
+          <div>
+            <span class="admin-item-label">Código</span>
+            <input type="text" value="${item.codigo || ''}" placeholder="ITALY" onchange="adminDraft[${catIndex}].items[${ii}].codigo=this.value.trim().toUpperCase()">
+          </div>
+        </div>
+      `;
+    } else {
+      row.innerHTML = `
+        <div class="admin-item-row">
+          <div style="flex:2"><input type="text" value="${item.nombre}" placeholder="Nombre" onchange="adminDraft[${catIndex}].items[${ii}].nombre=this.value"></div>
+          <div><input type="number" value="${item.precio}" placeholder="Precio" onchange="adminDraft[${catIndex}].items[${ii}].precio=parseFloat(this.value)||0"></div>
+          <button onclick="removeAdminItem(${catIndex},${ii})">✕</button>
+        </div>
+      `;
+    }
+    wrap.appendChild(row);
+  });
+}
+
+function addAdminItem(catIndex){
+  const cat = adminDraft[catIndex];
+  const nuevo = cat.tipo === 'peso' ? { nombre:'', precio:0, codigo:'' } : { nombre:'', precio:0 };
+  cat.items.push(nuevo);
+  renderAdminItems(catIndex);
+}
+function removeAdminItem(catIndex, itemIndex){
+  adminDraft[catIndex].items.splice(itemIndex, 1);
+  renderAdminItems(catIndex);
+}
+function removeAdminCategory(catIndex){
+  adminDraft.splice(catIndex, 1);
+  renderAdminCategories();
+}
+function addAdminCategory(){
+  const nombre = prompt('Nombre de la nueva categoría (ej. Relojes):');
+  if (!nombre) return;
+
+  let tipo = '';
+  while (!['peso','fijo','manual'].includes(tipo)){
+    tipo = (prompt(
+      '¿Cómo se vende "' + nombre + '"?\n\n' +
+      'Escribe una de estas 3 palabras:\n' +
+      '"peso" — por gramos, como el oro\n' +
+      '"fijo" — precio fijo por producto, como los perfumes\n' +
+      '"manual" — monto y descripción libres, como reparaciones'
+    ) || '').trim().toLowerCase();
+    if (tipo === null) return;
+  }
+
+  const nuevaCat = { nombre: nombre.trim(), tipo, items: [] };
+  if (tipo !== 'peso'){
+    const codigo = prompt('Código de columna en tu plantilla para "' + nombre + '" (ej. TEJ):') || '';
+    nuevaCat.codigo = codigo.trim().toUpperCase();
+  }
+  adminDraft.push(nuevaCat);
+  renderAdminCategories();
+}
+
+async function saveAdminConfig(){
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  const errEl = document.getElementById('adminSaveError');
+  errEl.style.display = 'none';
+
+  if (!url){
+    errEl.textContent = 'Pega la URL de Apps Script.';
+    errEl.style.display = 'block';
+    return;
+  }
+  APPS_SCRIPT_URL = url;
+  localStorage.setItem('dalias_script_url', url);
+  updateConnectBanner();
+
+  const cleanCategorias = adminDraft
+    .filter(c => c.nombre)
+    .map(c => ({ ...c, items: (c.items || []).filter(i => i.nombre) }));
+
+  const btn = document.getElementById('saveAdminBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'actualizarConfig', pin: adminPinValue, categorias: cleanCategorias })
+    });
+    const data = await res.json();
+    if (data.success){
+      categorias = cleanCategorias;
+      if (activeCatIndex >= categorias.length) activeCatIndex = 0;
+      renderTabs();
+      renderCategoryContent();
+      closeModal('overlayAdmin');
+      showToast('Configuración actualizada ✓');
+    } else {
+      errEl.textContent = data.error === 'PIN incorrecto' ? 'Contraseña incorrecta.' : 'No se pudo guardar.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
+  }
+}
+
+async function cambiarPin(){
+  const pinActual = document.getElementById('pinActualInput').value;
+  const pinNuevo = document.getElementById('pinNuevoInput').value;
+  const errEl = document.getElementById('pinChangeError');
+  errEl.style.display = 'none';
+
+  if (!pinActual || !pinNuevo){
+    errEl.textContent = 'Completa ambos campos.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!APPS_SCRIPT_URL){
+    errEl.textContent = 'Conecta primero con Google Sheets.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('pinChangeBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Cambiando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'cambiarPin', pinActual, pinNuevo })
+    });
+    const data = await res.json();
+    if (data.success){
+      adminPinValue = pinNuevo;
+      document.getElementById('pinActualInput').value = '';
+      document.getElementById('pinNuevoInput').value = '';
+      showToast('Contraseña actualizada ✓');
+    } else {
+      errEl.textContent = data.error || 'No se pudo cambiar la contraseña.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Cambiar contraseña';
+  }
+}
+
+// Lee números aceptando coma o punto decimal (ej. "2,5" o "2.5")
+function parseNum(val){
+  if (val === null || val === undefined) return 0;
+  const n = parseFloat(String(val).replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+</script>
+</body>
+</html>
