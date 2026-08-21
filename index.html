@@ -478,6 +478,7 @@
       <div class="tabs" style="margin-bottom:16px;">
         <button class="tab active" id="adminTabBtn-precios" onclick="switchAdminTab('precios')">Precios</button>
         <button class="tab" id="adminTabBtn-inventario" onclick="switchAdminTab('inventario')">Inventario</button>
+        <button class="tab" id="adminTabBtn-anular" onclick="switchAdminTab('anular')">Anular</button>
         <button class="tab" id="adminTabBtn-config" onclick="switchAdminTab('config')">Configuración</button>
       </div>
 
@@ -492,6 +493,19 @@
 
       <div id="adminTab-inventario" style="display:none;">
         <div id="adminInventario"></div>
+      </div>
+
+      <div id="adminTab-anular" style="display:none;">
+        <div class="field">
+          <label>N° de factura a anular</label>
+          <input type="text" id="anularFacturaInput" placeholder="Ej. 00123">
+        </div>
+        <button class="btn btn-ghost btn-block" id="buscarAnularBtn" onclick="buscarFacturaAnular()">Buscar</button>
+        <div id="anularResultado" style="display:none; margin-top:16px;">
+          <div class="modal-sub" id="anularInfo" style="margin-top:0; line-height:1.7;"></div>
+          <div class="error-text" id="anularError"></div>
+          <button class="btn btn-danger btn-block" id="confirmarAnularBtn" onclick="confirmarAnular()">Anular esta factura</button>
+        </div>
       </div>
 
       <div id="adminTab-config" style="display:none;">
@@ -1328,10 +1342,84 @@ function addAdminCategory(){
 }
 
 function switchAdminTab(tab){
-  ['precios','inventario','config'].forEach(t => {
+  ['precios','inventario','anular','config'].forEach(t => {
     document.getElementById('adminTab-' + t).style.display = (t === tab) ? 'block' : 'none';
     document.getElementById('adminTabBtn-' + t).classList.toggle('active', t === tab);
   });
+}
+
+// ---------- Anular factura ----------
+let facturaParaAnular = null;
+
+async function buscarFacturaAnular(){
+  const factura = document.getElementById('anularFacturaInput').value.trim();
+  if (!factura){ showToast('Escribe el número de factura.'); return; }
+  if (!APPS_SCRIPT_URL){ showToast('Conecta primero con Google Sheets.'); return; }
+
+  const btn = document.getElementById('buscarAnularBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'buscarFactura', factura })
+    });
+    const data = await res.json();
+    if (!data.success || !data.encontrada){
+      showToast(data.error || 'No se encontró esa factura.');
+      document.getElementById('anularResultado').style.display = 'none';
+      return;
+    }
+    facturaParaAnular = factura;
+    document.getElementById('anularInfo').innerHTML =
+      `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b>`;
+    document.getElementById('anularResultado').style.display = 'block';
+    document.getElementById('anularError').style.display = 'none';
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Buscar';
+  }
+}
+
+async function confirmarAnular(){
+  if (!facturaParaAnular) return;
+  const ok = confirm('¿Seguro que quiere anular la factura ' + facturaParaAnular + '? Esto devuelve la mercancía al inventario y no se puede deshacer.');
+  if (!ok) return;
+
+  const errEl = document.getElementById('anularError');
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('confirmarAnularBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Anulando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'anularFactura', pin: adminPinValue, factura: facturaParaAnular })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Factura anulada ✓');
+      document.getElementById('anularResultado').style.display = 'none';
+      document.getElementById('anularFacturaInput').value = '';
+      facturaParaAnular = null;
+    } else {
+      errEl.textContent = data.error || 'No se pudo anular la factura.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Anular esta factura';
+  }
 }
 
 function saveScriptUrlOnly(){
