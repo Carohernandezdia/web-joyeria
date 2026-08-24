@@ -252,6 +252,13 @@
   .cat-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
 
   /* ---------- Admin: página completa ---------- */
+  /* ---------- Bloqueo de acceso a toda la app ---------- */
+  .app-lock{
+    position:fixed; inset:0; background: var(--black); z-index:300;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .app-lock.hidden{ display:none; }
+
   .admin-page{
     position:fixed; inset:0; background: var(--black); z-index:150;
     display:flex; flex-direction:column;
@@ -307,6 +314,19 @@
 </style>
 </head>
 <body>
+
+<div class="app-lock hidden" id="appLockScreen">
+  <div class="modal" style="max-width:380px;">
+    <div class="name" style="text-align:center; display:block; font-size:28px; margin-bottom:6px;">DALIA'S</div>
+    <div class="sub" style="text-align:center; display:block; margin-bottom:20px;">Joyería · Ventas</div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="appLockPin" placeholder="••••">
+    </div>
+    <div class="error-text" id="appLockError">Contraseña incorrecta.</div>
+    <button class="btn btn-gold btn-block" id="appLockBtn" onclick="verificarAccesoApp()">Entrar</button>
+  </div>
+</div>
 
 <header>
   <div class="brand">
@@ -537,10 +557,17 @@
 
       <div class="admin-content">
         <div id="adminTab-resumen">
-          <div class="field">
-            <label>Mes</label>
-            <select id="resumenMesSelect" onchange="cargarResumenMes()"></select>
+          <div class="row-2">
+            <div class="field">
+              <label>Desde</label>
+              <input type="date" id="resumenDesde">
+            </div>
+            <div class="field">
+              <label>Hasta</label>
+              <input type="date" id="resumenHasta">
+            </div>
           </div>
+          <button class="btn btn-gold btn-block" id="resumenBuscarBtn" onclick="cargarResumenRango()">Buscar</button>
           <div id="resumenContenido"></div>
         </div>
 
@@ -663,7 +690,7 @@ function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 function closeItemModal(id){ editingIndex = null; closeModal(id); }
 
 // ---------- Init ----------
-window.addEventListener('DOMContentLoaded', () => {
+function initApp(){
   document.getElementById('vendorInput').value = localStorage.getItem('dalias_vendor') || '';
   document.getElementById('vendorInput').addEventListener('input', e => {
     localStorage.setItem('dalias_vendor', e.target.value);
@@ -687,7 +714,57 @@ window.addEventListener('DOMContentLoaded', () => {
   renderCategoryContent();
   updateConnectBanner();
   if (APPS_SCRIPT_URL) loadConfig();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Si todavía no se ha conectado el Sheets (primera vez en este
+  // dispositivo), dejamos pasar directo para que puedan conectarlo
+  // desde ⚙ Configuración — ahí no hay nada que proteger todavía.
+  if (!APPS_SCRIPT_URL){
+    initApp();
+    return;
+  }
+  if (localStorage.getItem('dalias_app_unlocked') === 'true'){
+    initApp();
+  } else {
+    document.getElementById('appLockScreen').classList.remove('hidden');
+    document.getElementById('appLockPin').addEventListener('keydown', e => {
+      if (e.key === 'Enter') verificarAccesoApp();
+    });
+  }
 });
+
+async function verificarAccesoApp(){
+  const pin = document.getElementById('appLockPin').value;
+  const errEl = document.getElementById('appLockError');
+  const btn = document.getElementById('appLockBtn');
+  errEl.style.display = 'none';
+
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verificarPin', pin })
+    });
+    const data = await res.json();
+    if (data.success){
+      localStorage.setItem('dalias_app_unlocked', 'true');
+      document.getElementById('appLockScreen').classList.add('hidden');
+      initApp();
+    } else {
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar. Intenta de nuevo.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
 
 function updateConnectBanner(){
   document.getElementById('connectBanner').classList.toggle('show', !APPS_SCRIPT_URL);
@@ -1210,45 +1287,41 @@ function checkAdminPin(){
   switchAdminTab('resumen');
   renderAdminCategories();
   loadInventarioAdmin();
-  loadResumenMeses();
+  initResumenFechas();
 }
 
 // ---------- Resumen ----------
-async function loadResumenMeses(){
-  const select = document.getElementById('resumenMesSelect');
-  select.innerHTML = '<option>Cargando...</option>';
-  if (!APPS_SCRIPT_URL){
-    select.innerHTML = '<option>Conecta primero con Google Sheets</option>';
-    return;
-  }
-  try{
-    const res = await fetch(APPS_SCRIPT_URL + '?action=listaMeses');
-    const data = await res.json();
-    const meses = data.meses || [];
-    if (!meses.length){
-      select.innerHTML = '<option>Aún no hay hojas mensuales</option>';
-      document.getElementById('resumenContenido').innerHTML = '';
-      return;
-    }
-    select.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
-    select.value = meses[meses.length - 1]; // la más reciente
-    cargarResumenMes();
-  }catch(err){
-    select.innerHTML = '<option>No se pudo cargar</option>';
-  }
+function initResumenFechas(){
+  const hoy = new Date();
+  const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const fmtFecha = d => d.toISOString().slice(0, 10);
+  document.getElementById('resumenDesde').value = fmtFecha(primerDiaMes);
+  document.getElementById('resumenHasta').value = fmtFecha(hoy);
+  cargarResumenRango();
 }
 
-async function cargarResumenMes(){
-  const hoja = document.getElementById('resumenMesSelect').value;
+async function cargarResumenRango(){
+  const desde = document.getElementById('resumenDesde').value;
+  const hasta = document.getElementById('resumenHasta').value;
   const contenido = document.getElementById('resumenContenido');
-  if (!hoja){ contenido.innerHTML = ''; return; }
+
+  if (!desde || !hasta){ contenido.innerHTML = ''; return; }
+  if (!APPS_SCRIPT_URL){
+    contenido.innerHTML = '<div class="modal-sub" style="margin:16px 0 0;">Conecta primero con Google Sheets.</div>';
+    return;
+  }
+
+  const btn = document.getElementById('resumenBuscarBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
   contenido.innerHTML = '<div class="modal-sub" style="margin:16px 0 0;">Cargando...</div>';
 
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'resumenMes', hoja })
+      body: JSON.stringify({ action: 'resumenRango', desde, hasta })
     });
     const data = await res.json();
     if (!data.success){
@@ -1269,7 +1342,7 @@ async function cargarResumenMes(){
 
     contenido.innerHTML = `
       <div class="admin-item-card" style="border-color:var(--gold-deep);">
-        <div class="admin-item-row"><div style="flex:2">Total ventas del mes</div><div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(data.totalVentas)}</div></div>
+        <div class="admin-item-row"><div style="flex:2">Total ventas</div><div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(data.totalVentas)}</div></div>
       </div>
       <div class="admin-item-card">
         <div class="admin-item-row"><div style="flex:2">Total créditos / abonos</div><div style="text-align:right; font-weight:600;">${fmt(data.totalCreditos)}</div></div>
@@ -1287,6 +1360,8 @@ async function cargarResumenMes(){
     `;
   }catch(err){
     contenido.innerHTML = '<div class="modal-sub" style="margin:16px 0 0;">No se pudo conectar con el Sheets.</div>';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Buscar';
   }
 }
 
