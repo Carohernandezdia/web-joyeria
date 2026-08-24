@@ -528,6 +528,7 @@
       <nav class="admin-sidebar">
         <button class="admin-nav-btn active" id="adminTabBtn-precios" onclick="switchAdminTab('precios')">💰 Precios</button>
         <button class="admin-nav-btn" id="adminTabBtn-inventario" onclick="switchAdminTab('inventario')">📦 Inventario</button>
+        <button class="admin-nav-btn" id="adminTabBtn-gastos" onclick="switchAdminTab('gastos')">🧾 Gastos</button>
         <button class="admin-nav-btn" id="adminTabBtn-anular" onclick="switchAdminTab('anular')">🚫 Anular</button>
         <button class="admin-nav-btn" id="adminTabBtn-config" onclick="switchAdminTab('config')">⚙ Configuración</button>
       </nav>
@@ -544,6 +545,34 @@
 
         <div id="adminTab-inventario" style="display:none;">
           <div id="adminInventario"></div>
+        </div>
+
+        <div id="adminTab-gastos" style="display:none;">
+          <div class="field">
+            <label>Categoría</label>
+            <select id="gastoCategoria">
+              <option>Nómina</option>
+              <option>Aseo</option>
+              <option>Energía</option>
+              <option>Arriendo</option>
+              <option>Vigilancia</option>
+              <option>Inversiones</option>
+              <option>Publicidad</option>
+              <option>EPS</option>
+              <option>Impuestos</option>
+              <option>Otros</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Descripción</label>
+            <input type="text" id="gastoDescripcion" placeholder="Ej. Pago aseo semana 3">
+          </div>
+          <div class="field">
+            <label>Valor</label>
+            <input type="number" id="gastoValor" min="0" step="1000" placeholder="Ej. 80000">
+          </div>
+          <div class="error-text" id="gastoError"></div>
+          <button class="btn btn-gold btn-block" id="registrarGastoBtn" onclick="registrarGastoBtn()">Registrar gasto</button>
         </div>
 
         <div id="adminTab-anular" style="display:none;">
@@ -1390,10 +1419,57 @@ function addAdminCategory(){
 }
 
 function switchAdminTab(tab){
-  ['precios','inventario','anular','config'].forEach(t => {
+  ['precios','inventario','gastos','anular','config'].forEach(t => {
     document.getElementById('adminTab-' + t).style.display = (t === tab) ? 'block' : 'none';
     document.getElementById('adminTabBtn-' + t).classList.toggle('active', t === tab);
   });
+}
+
+// ---------- Gastos ----------
+async function registrarGastoBtn(){
+  const categoria = document.getElementById('gastoCategoria').value;
+  const descripcion = document.getElementById('gastoDescripcion').value.trim();
+  const valor = parseNum(document.getElementById('gastoValor').value);
+  const errEl = document.getElementById('gastoError');
+  errEl.style.display = 'none';
+
+  if (!valor || valor <= 0){
+    errEl.textContent = 'Escribe un valor válido.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!APPS_SCRIPT_URL){
+    errEl.textContent = 'Conecta primero con Google Sheets.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('registrarGastoBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'registrarGasto', pin: adminPinValue, categoria, descripcion, valor })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Gasto registrado ✓');
+      document.getElementById('gastoDescripcion').value = '';
+      document.getElementById('gastoValor').value = '';
+    } else {
+      errEl.textContent = data.error || 'No se pudo registrar el gasto.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Registrar gasto';
+  }
 }
 
 // ---------- Anular factura ----------
