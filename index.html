@@ -527,7 +527,8 @@
     </header>
     <div class="admin-page-body">
       <nav class="admin-sidebar">
-        <button class="admin-nav-btn active" id="adminTabBtn-precios" onclick="switchAdminTab('precios')">💰 Precios</button>
+        <button class="admin-nav-btn active" id="adminTabBtn-resumen" onclick="switchAdminTab('resumen')">📊 Resumen</button>
+        <button class="admin-nav-btn" id="adminTabBtn-precios" onclick="switchAdminTab('precios')">💰 Precios</button>
         <button class="admin-nav-btn" id="adminTabBtn-inventario" onclick="switchAdminTab('inventario')">📦 Inventario</button>
         <button class="admin-nav-btn" id="adminTabBtn-gastos" onclick="switchAdminTab('gastos')">🧾 Gastos</button>
         <button class="admin-nav-btn" id="adminTabBtn-anular" onclick="switchAdminTab('anular')">🚫 Anular</button>
@@ -535,7 +536,15 @@
       </nav>
 
       <div class="admin-content">
-        <div id="adminTab-precios">
+        <div id="adminTab-resumen">
+          <div class="field">
+            <label>Mes</label>
+            <select id="resumenMesSelect" onchange="cargarResumenMes()"></select>
+          </div>
+          <div id="resumenContenido"></div>
+        </div>
+
+        <div id="adminTab-precios" style="display:none;">
           <div id="adminCategories"></div>
           <button class="link-btn" onclick="addAdminCategory()">+ Agregar categoría nueva</button>
           <div class="error-text" id="adminSaveError">No se pudo guardar. Verifica la conexión.</div>
@@ -1198,9 +1207,87 @@ function checkAdminPin(){
   document.getElementById('pinActualInput').value = '';
   document.getElementById('pinNuevoInput').value = '';
   document.getElementById('pinChangeError').style.display = 'none';
-  switchAdminTab('precios');
+  switchAdminTab('resumen');
   renderAdminCategories();
   loadInventarioAdmin();
+  loadResumenMeses();
+}
+
+// ---------- Resumen ----------
+async function loadResumenMeses(){
+  const select = document.getElementById('resumenMesSelect');
+  select.innerHTML = '<option>Cargando...</option>';
+  if (!APPS_SCRIPT_URL){
+    select.innerHTML = '<option>Conecta primero con Google Sheets</option>';
+    return;
+  }
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=listaMeses');
+    const data = await res.json();
+    const meses = data.meses || [];
+    if (!meses.length){
+      select.innerHTML = '<option>Aún no hay hojas mensuales</option>';
+      document.getElementById('resumenContenido').innerHTML = '';
+      return;
+    }
+    select.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+    select.value = meses[meses.length - 1]; // la más reciente
+    cargarResumenMes();
+  }catch(err){
+    select.innerHTML = '<option>No se pudo cargar</option>';
+  }
+}
+
+async function cargarResumenMes(){
+  const hoja = document.getElementById('resumenMesSelect').value;
+  const contenido = document.getElementById('resumenContenido');
+  if (!hoja){ contenido.innerHTML = ''; return; }
+  contenido.innerHTML = '<div class="modal-sub" style="margin:16px 0 0;">Cargando...</div>';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'resumenMes', hoja })
+    });
+    const data = await res.json();
+    if (!data.success){
+      contenido.innerHTML = `<div class="modal-sub" style="margin:16px 0 0;">${data.error || 'No se pudo cargar.'}</div>`;
+      return;
+    }
+
+    const filasDesglose = (data.desglose || [])
+      .filter(d => d.etiqueta)
+      .map(d => `
+        <div class="admin-item-card">
+          <div class="admin-item-row">
+            <div style="flex:2">${d.etiqueta}</div>
+            <div style="text-align:right; font-weight:600;">${fmt(d.valor)}</div>
+          </div>
+        </div>
+      `).join('');
+
+    contenido.innerHTML = `
+      <div class="admin-item-card" style="border-color:var(--gold-deep);">
+        <div class="admin-item-row"><div style="flex:2">Total ventas del mes</div><div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(data.totalVentas)}</div></div>
+      </div>
+      <div class="admin-item-card">
+        <div class="admin-item-row"><div style="flex:2">Total créditos / abonos</div><div style="text-align:right; font-weight:600;">${fmt(data.totalCreditos)}</div></div>
+      </div>
+      <div class="admin-item-card">
+        <div class="admin-item-row"><div style="flex:2">Total gastos</div><div style="text-align:right; font-weight:600;">${fmt(data.totalGastos)}</div></div>
+      </div>
+      <div class="admin-item-card" style="border-color:${data.gananciaBruta >= 0 ? 'var(--gold)' : 'var(--danger)'};">
+        <div class="admin-item-row"><div style="flex:2">Ganancia bruta</div><div style="text-align:right; font-weight:700;">${fmt(data.gananciaBruta)}</div></div>
+      </div>
+      <div class="admin-section">
+        <h4>Desglose por tipo</h4>
+        ${filasDesglose || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
+      </div>
+    `;
+  }catch(err){
+    contenido.innerHTML = '<div class="modal-sub" style="margin:16px 0 0;">No se pudo conectar con el Sheets.</div>';
+  }
 }
 
 let inventarioActual = {}; // clave: código (o categoria::producto) -> cantidad
@@ -1420,7 +1507,7 @@ function addAdminCategory(){
 }
 
 function switchAdminTab(tab){
-  ['precios','inventario','gastos','anular','config'].forEach(t => {
+  ['resumen','precios','inventario','gastos','anular','config'].forEach(t => {
     document.getElementById('adminTab-' + t).style.display = (t === tab) ? 'block' : 'none';
     document.getElementById('adminTabBtn-' + t).classList.toggle('active', t === tab);
   });
