@@ -251,6 +251,39 @@
   .link-btn{ background:none; border:none; color: var(--gold); cursor:pointer; font-size:13px; padding:0; text-align:left; }
   .cat-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
 
+  /* ---------- Factura imprimible ---------- */
+  #facturaPreview{
+    background:#fff; color:#111; border-radius:8px; overflow:hidden; margin-top:4px;
+  }
+  .invoice-half{ padding:12px 16px; border-bottom:1px dashed #999; }
+  .invoice-half:last-child{ border-bottom:none; }
+  .invoice-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px; }
+  .invoice-brand-block{ display:flex; align-items:center; gap:8px; }
+  .invoice-logo{ width:34px; height:34px; object-fit:contain; flex-shrink:0; }
+  .invoice-brand-name{ font-family:'Cormorant Garamond', serif; font-size:18px; font-weight:700; color:#111; }
+  .invoice-brand-name span{ font-size:11px; font-weight:400; color:#555; margin-left:4px; }
+  .invoice-address{ font-size:9px; color:#666; }
+  .invoice-garantia{ text-align:right; font-size:9px; color:#333; border:1px solid #999; border-radius:4px; padding:4px 8px; white-space:nowrap; }
+  .invoice-garantia-label{ font-weight:700; font-size:9px; text-transform:uppercase; }
+  .invoice-garantia-num{ font-weight:700; color:#b8302a; font-size:13px; }
+  .invoice-warranty{ font-size:8px; color:#777; margin-bottom:6px; line-height:1.3; }
+  .invoice-copy-label{ font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#777; margin-bottom:6px; }
+  .invoice-meta-row{ display:flex; justify-content:space-between; font-size:11px; color:#222; margin-bottom:6px; gap:10px; }
+  .invoice-table{ width:100%; border-collapse:collapse; font-size:11px; margin-bottom:6px; }
+  .invoice-table th, .invoice-table td{ border-bottom:1px solid #ddd; padding:3px 4px; text-align:left; color:#111; }
+  .invoice-total{ font-weight:700; font-size:12px; text-align:right; margin-bottom:6px; color:#111; }
+  .invoice-firma{ font-size:10px; color:#333; margin-bottom:6px; }
+  .invoice-footer{ font-size:10px; color:#555; text-align:center; border-top:1px solid #ddd; padding-top:4px; }
+
+  @media print{
+    body *{ visibility:hidden; }
+    #facturaPreview, #facturaPreview *{ visibility:visible; }
+    #facturaPreview{
+      position:fixed; top:0; left:0; width:100%; margin:0; border-radius:0;
+    }
+    @page{ size: letter; margin: 10mm; }
+  }
+
   /* ---------- Admin: página completa ---------- */
   /* ---------- Bloqueo de acceso a toda la app ---------- */
   .app-lock{
@@ -470,7 +503,7 @@
     <h3>Finalizar venta</h3>
     <div class="field">
       <label>N° de factura</label>
-      <input type="text" id="facturaNum" placeholder="Ej. 00123">
+      <input type="text" id="facturaNum" placeholder="Generando..." disabled>
     </div>
     <div class="field">
       <label>Nombre del cliente</label>
@@ -495,6 +528,18 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('overlayCheckout')">Cancelar</button>
       <button class="btn btn-gold" style="flex:1" id="confirmCheckoutBtn" onclick="confirmCheckout()">Confirmar venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: factura para imprimir -->
+<div class="overlay center hidden" id="overlayFactura">
+  <div class="modal" style="max-width:480px;">
+    <h3>Venta registrada ✓</h3>
+    <div id="facturaPreview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('overlayFactura')">Cerrar</button>
+      <button class="btn btn-gold" style="flex:1" onclick="window.print()">🖨 Imprimir</button>
     </div>
   </div>
 </div>
@@ -631,6 +676,17 @@
             <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
           </div>
           <button class="btn btn-ghost btn-block" onclick="saveScriptUrlOnly()">Guardar conexión</button>
+
+          <div class="admin-section">
+            <h4>Número de factura</h4>
+            <p class="modal-sub" style="margin-top:0;">Fija con qué número quiere que empiece a contar la app (ej. si va en la 1994, la próxima venta va a salir con 1995).</p>
+            <div class="field">
+              <label>Próxima factura debe ser</label>
+              <input type="number" id="consecutivoInput" min="1" placeholder="Ej. 1995">
+            </div>
+            <div class="error-text" id="consecutivoError"></div>
+            <button class="btn btn-ghost btn-block" id="consecutivoBtn" onclick="guardarConsecutivo()">Guardar número</button>
+          </div>
 
           <div class="admin-section">
             <h4>Cambiar contraseña</h4>
@@ -1107,15 +1163,33 @@ function editCartItem(i){
 }
 
 // ---------- Checkout ----------
-function openCheckout(){
+async function openCheckout(){
   document.getElementById('checkoutError').style.display = 'none';
-  document.getElementById('facturaNum').value = '';
+  document.getElementById('facturaNum').value = 'Generando...';
   document.getElementById('clienteNombre').value = '';
   document.getElementById('clienteTelefono').value = '';
   document.getElementById('facturaEstado').value = 'Vendida';
   document.getElementById('abonoInicial').value = '';
   document.getElementById('abonoField').style.display = 'none';
   openModal('overlayCheckout');
+
+  if (!APPS_SCRIPT_URL){
+    document.getElementById('facturaNum').value = '';
+    showToast('Conecta primero con Google Sheets.');
+    return;
+  }
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'siguienteFactura' })
+    });
+    const data = await res.json();
+    document.getElementById('facturaNum').value = data.factura || '';
+  }catch(err){
+    document.getElementById('facturaNum').value = '';
+    showToast('No se pudo generar el número de factura.');
+  }
 }
 async function confirmCheckout(){
   const factura = document.getElementById('facturaNum').value.trim();
@@ -1164,11 +1238,11 @@ async function confirmCheckout(){
     });
     const data = await res.json();
     if (data.success){
+      mostrarFactura(venta, factura, cliente, telefono, estado);
       cart = [];
       renderCartBadge();
       closeModal('overlayCheckout');
       closeModal('overlayCart');
-      showToast('Venta registrada ✓');
     } else {
       showToast('Error: ' + (data.error || 'no se pudo registrar'));
     }
@@ -1177,6 +1251,67 @@ async function confirmCheckout(){
   }finally{
     btn.disabled = false; btn.textContent = 'Confirmar venta';
   }
+}
+
+// ---------- Factura imprimible ----------
+function getLogoDataUri(){
+  const img = document.querySelector('.brand .mark img');
+  return img ? img.src : '';
+}
+
+function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloCopia){
+  const hoy = new Date();
+  const fechaTexto = ('0'+hoy.getDate()).slice(-2) + '/' + ('0'+(hoy.getMonth()+1)).slice(-2) + '/' + hoy.getFullYear();
+  const total = items.reduce((s, i) => s + i.total, 0);
+  const logoSrc = getLogoDataUri();
+
+  const filas = items.map(it => `
+    <tr>
+      <td>${it.peso ? it.peso + ' g' : (it.cantidad || 1)}</td>
+      <td>${it.tipoOroOProducto}${it.especificacion ? ' — ' + it.especificacion : ''}</td>
+      <td>${fmt(it.total)}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <div class="invoice-half">
+      <div class="invoice-top">
+        <div class="invoice-brand-block">
+          ${logoSrc ? `<img class="invoice-logo" src="${logoSrc}" alt="">` : ''}
+          <div>
+            <div class="invoice-brand-name">Dalia's <span>Joyería</span></div>
+            <div class="invoice-address">Cra 41 # 40-13, Parque Principal Zaragoza</div>
+          </div>
+        </div>
+        <div class="invoice-garantia">
+          <div class="invoice-garantia-label">Constancia Garantía</div>
+          <div class="invoice-garantia-num">N° ${factura}</div>
+          <div>Fecha: ${fechaTexto}</div>
+        </div>
+      </div>
+      <div class="invoice-warranty">Todas nuestras joyas están elaboradas en oro 18k, por lo tanto se garantiza el material; no cubre daños originados por mal uso.</div>
+      <div class="invoice-copy-label">${tituloCopia}</div>
+      <div class="invoice-meta-row">
+        <div>Cliente: ${cliente || '_______________________'}</div>
+        <div>Teléfono: ${telefono || '_______________'}</div>
+      </div>
+      <table class="invoice-table">
+        <thead><tr><th>Cant.</th><th>Descripción</th><th>Vr. Total</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <div class="invoice-total">Total: ${fmt(total)} &nbsp;·&nbsp; Estado: ${estado}</div>
+      <div class="invoice-firma">Firma del vendedor: ______________________ &nbsp;&nbsp; (${items[0] ? (items[0].vendedor || '') : ''})</div>
+      <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
+    </div>
+  `;
+}
+
+function mostrarFactura(items, factura, cliente, telefono, estado){
+  const html =
+    construirFacturaHTML(items, factura, cliente, telefono, estado, 'Copia cliente') +
+    construirFacturaHTML(items, factura, cliente, telefono, estado, 'Copia tienda');
+  document.getElementById('facturaPreview').innerHTML = html;
+  openModal('overlayFactura');
 }
 
 // ---------- Abonos ----------
@@ -1761,6 +1896,49 @@ async function saveAdminConfig(){
     errEl.style.display = 'block';
   }finally{
     btn.disabled = false; btn.textContent = 'Guardar cambios';
+  }
+}
+
+async function guardarConsecutivo(){
+  const numero = document.getElementById('consecutivoInput').value;
+  const errEl = document.getElementById('consecutivoError');
+  errEl.style.display = 'none';
+
+  if (!numero || Number(numero) < 1){
+    errEl.textContent = 'Escribe un número válido.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!APPS_SCRIPT_URL){
+    errEl.textContent = 'Conecta primero con Google Sheets.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('consecutivoBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'establecerConsecutivo', pin: adminPinValue, numero })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Número de factura actualizado ✓');
+      document.getElementById('consecutivoInput').value = '';
+    } else {
+      errEl.textContent = data.error || 'No se pudo guardar.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Guardar número';
   }
 }
 
