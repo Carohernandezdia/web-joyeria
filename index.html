@@ -144,7 +144,7 @@
     position:fixed; bottom:0; left:0; right:0; z-index:30;
     background: linear-gradient(0deg, #101011, #0b0b0cee);
     border-top:1px solid var(--line);
-    display:flex; justify-content:center; gap: 40px;
+    display:flex; justify-content:center; gap: 26px;
     padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
   }
   .nav-btn{
@@ -249,6 +249,11 @@
   .admin-cat-codigo label{ font-size:10px; letter-spacing:1px; text-transform:uppercase; color: var(--text-dim); display:block; margin-bottom:4px; }
   .admin-cat-codigo input{ background: var(--panel); border:1px solid var(--line); color:var(--text); padding:7px 10px; border-radius:6px; font-size:13px; width:100%; max-width:220px; box-sizing:border-box; }
   .link-btn{ background:none; border:none; color: var(--gold); cursor:pointer; font-size:13px; padding:0; text-align:left; }
+  .link-btn.btn-resaltado{
+    background: var(--gold); color:#1a1305; border-radius:8px; padding:8px 14px;
+    font-weight:800; animation: pulso 1s ease-in-out infinite;
+  }
+  @keyframes pulso{ 0%,100%{ box-shadow:0 0 0 0 rgba(212,175,55,.5);} 50%{ box-shadow:0 0 0 6px rgba(212,175,55,0);} }
   .cat-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
 
   /* ---------- Factura imprimible ---------- */
@@ -395,6 +400,10 @@
     <span class="nav-icon">💰</span>
     Abonos
   </button>
+  <button class="nav-btn" id="gastoVendedorNavBtn">
+    <span class="nav-icon">🧾</span>
+    Gasto
+  </button>
   <button class="nav-btn" id="settingsNavBtn">
     <span class="nav-icon">🔐</span>
     Admin
@@ -532,6 +541,27 @@
   </div>
 </div>
 
+<!-- Modal: gasto varios (vendedores) -->
+<div class="overlay center hidden" id="overlayGastoVendedor">
+  <div class="modal">
+    <h3>🧾 Gasto varios</h3>
+    <div class="modal-sub" style="margin-top:0;">Para lo que compran ustedes (esfero, café, pilas...), no de la joyería.</div>
+    <div class="field">
+      <label>¿Qué compró?</label>
+      <input type="text" id="gastoVendedorDescripcion" placeholder="Ej. Café y pan">
+    </div>
+    <div class="field">
+      <label>Valor</label>
+      <input type="number" id="gastoVendedorValor" min="0" step="500" placeholder="Ej. 5000">
+    </div>
+    <div class="error-text" id="gastoVendedorError"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('overlayGastoVendedor')">Cancelar</button>
+      <button class="btn btn-gold" style="flex:1" id="gastoVendedorBtn" onclick="registrarGastoVendedorBtn()">Registrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: factura para imprimir -->
 <div class="overlay center hidden" id="overlayFactura">
   <div class="modal" style="max-width:480px;">
@@ -549,13 +579,14 @@
   <div class="modal">
     <h3>💰 Abonos</h3>
     <div class="field">
-      <label>N° de factura</label>
-      <input type="text" id="abonoFactura" placeholder="Ej. 00123">
+      <label>N° de factura o nombre del cliente</label>
+      <input type="text" id="abonoFactura" placeholder="Ej. 00123 o María Pérez">
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('overlayAbonos')">Cerrar</button>
       <button class="btn btn-gold" style="flex:1" id="buscarFacturaBtn" onclick="buscarFacturaAbono()">Buscar</button>
     </div>
+    <div id="abonoListaNombres" style="display:none; margin-top:14px;"></div>
     <div id="abonoResultado" style="display:none; margin-top:18px;">
       <div class="modal-sub" id="abonoInfo" style="margin-top:0; line-height:1.7;"></div>
       <div class="field">
@@ -754,6 +785,7 @@ function initApp(){
 
   document.getElementById('cartNavBtn').addEventListener('click', () => openModal('overlayCart'));
   document.getElementById('abonosNavBtn').addEventListener('click', openAbonos);
+  document.getElementById('gastoVendedorNavBtn').addEventListener('click', openGastoVendedor);
   document.getElementById('settingsNavBtn').addEventListener('click', openAdmin);
 
   document.getElementById('facturaEstado').addEventListener('change', function(){
@@ -1191,7 +1223,10 @@ async function openCheckout(){
     showToast('No se pudo generar el número de factura.');
   }
 }
+let checkoutEnProceso = false;
+
 async function confirmCheckout(){
+  if (checkoutEnProceso) return; // candado inmediato, no depende de que el botón ya se vea deshabilitado
   const factura = document.getElementById('facturaNum').value.trim();
   const cliente = document.getElementById('clienteNombre').value.trim();
   const telefono = document.getElementById('clienteTelefono').value.trim();
@@ -1215,8 +1250,8 @@ async function confirmCheckout(){
     return;
   }
 
+  checkoutEnProceso = true;
   const btn = document.getElementById('confirmCheckoutBtn');
-  if (btn.disabled) return; // evita doble clic
   btn.disabled = true;
   btn.textContent = 'Enviando...';
 
@@ -1250,6 +1285,52 @@ async function confirmCheckout(){
     showToast('No se pudo conectar con el Sheets.');
   }finally{
     btn.disabled = false; btn.textContent = 'Confirmar venta';
+    checkoutEnProceso = false;
+  }
+}
+
+// ---------- Gasto varios (vendedores) ----------
+function openGastoVendedor(){
+  document.getElementById('gastoVendedorDescripcion').value = '';
+  document.getElementById('gastoVendedorValor').value = '';
+  document.getElementById('gastoVendedorError').style.display = 'none';
+  openModal('overlayGastoVendedor');
+}
+
+async function registrarGastoVendedorBtn(){
+  const descripcion = document.getElementById('gastoVendedorDescripcion').value.trim();
+  const valor = parseNum(document.getElementById('gastoVendedorValor').value);
+  const errEl = document.getElementById('gastoVendedorError');
+  errEl.style.display = 'none';
+
+  if (!descripcion){ errEl.textContent = 'Escribe qué compró.'; errEl.style.display = 'block'; return; }
+  if (!valor || valor <= 0){ errEl.textContent = 'Escribe un valor válido.'; errEl.style.display = 'block'; return; }
+  if (!APPS_SCRIPT_URL){ errEl.textContent = 'Conecta primero con Google Sheets.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('gastoVendedorBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'registrarGastoVendedor', descripcion, valor, vendedor: getVendor() })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Gasto registrado ✓');
+      closeModal('overlayGastoVendedor');
+    } else {
+      errEl.textContent = data.error || 'No se pudo registrar.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Registrar';
   }
 }
 
@@ -1300,6 +1381,7 @@ function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloC
         <tbody>${filas}</tbody>
       </table>
       <div class="invoice-total">Total: ${fmt(total)} &nbsp;·&nbsp; Estado: ${estado}</div>
+      ${estado === 'Separada' ? `<div class="invoice-total" style="color:#b8302a;">Abonó: ${fmt(items[0] ? (items[0].abono || 0) : 0)} &nbsp;·&nbsp; Saldo: ${fmt(total - (items[0] ? (items[0].abono || 0) : 0))}</div>` : ''}
       <div class="invoice-firma">Firma del vendedor: ______________________ &nbsp;&nbsp; (${items[0] ? (items[0].vendedor || '') : ''})</div>
       <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
     </div>
@@ -1314,41 +1396,115 @@ function mostrarFactura(items, factura, cliente, telefono, estado){
   openModal('overlayFactura');
 }
 
+function construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, tituloCopia){
+  const hoy = new Date();
+  const fechaTexto = ('0'+hoy.getDate()).slice(-2) + '/' + ('0'+(hoy.getMonth()+1)).slice(-2) + '/' + hoy.getFullYear();
+  const logoSrc = getLogoDataUri();
+
+  return `
+    <div class="invoice-half">
+      <div class="invoice-top">
+        <div class="invoice-brand-block">
+          ${logoSrc ? `<img class="invoice-logo" src="${logoSrc}" alt="">` : ''}
+          <div>
+            <div class="invoice-brand-name">Dalia's <span>Joyería</span></div>
+            <div class="invoice-address">Cra 41 # 40-13, Parque Principal Zaragoza</div>
+          </div>
+        </div>
+        <div class="invoice-garantia">
+          <div class="invoice-garantia-label">Recibo de Abono</div>
+          <div class="invoice-garantia-num">N° ${factura}</div>
+          <div>Fecha: ${fechaTexto}</div>
+        </div>
+      </div>
+      <div class="invoice-copy-label">${tituloCopia}</div>
+      <table class="invoice-table">
+        <thead><tr><th>Concepto</th><th></th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2">Abono de hoy</td><td>${fmt(montoAbonado)}</td></tr>
+          <tr><td colspan="2">Total de la factura</td><td>${fmt(total)}</td></tr>
+          <tr><td colspan="2">Abonado en total</td><td>${fmt(abonoTotal)}</td></tr>
+        </tbody>
+      </table>
+      <div class="invoice-total" style="color:#b8302a;">Saldo pendiente: ${fmt(saldo)} &nbsp;·&nbsp; Estado: ${estado}</div>
+      <div class="invoice-firma">Firma del vendedor: ______________________</div>
+      <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
+    </div>
+  `;
+}
+
+function mostrarFacturaAbono(factura, montoAbonado, abonoTotal, total, saldo, estado){
+  const html =
+    construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, 'Copia cliente') +
+    construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, 'Copia tienda');
+  document.getElementById('facturaPreview').innerHTML = html;
+  openModal('overlayFactura');
+}
+
 // ---------- Abonos ----------
 function openAbonos(){
   document.getElementById('abonoFactura').value = '';
   document.getElementById('abonoMonto').value = '';
   document.getElementById('abonoResultado').style.display = 'none';
   document.getElementById('abonoError').style.display = 'none';
+  document.getElementById('abonoListaNombres').style.display = 'none';
   openModal('overlayAbonos');
 }
+function mostrarResultadoAbono(data){
+  document.getElementById('abonoInfo').innerHTML =
+    `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
+    (data.aviso ? `<div class="aviso-text">${data.aviso}</div>` : '');
+  document.getElementById('abonoResultado').style.display = 'block';
+  document.getElementById('abonoError').style.display = 'none';
+  document.getElementById('abonoListaNombres').style.display = 'none';
+}
+
 async function buscarFacturaAbono(){
-  const factura = document.getElementById('abonoFactura').value.trim();
-  if (!factura){ showToast('Escribe el número de factura.'); return; }
+  const texto = document.getElementById('abonoFactura').value.trim();
+  if (!texto){ showToast('Escribe el número de factura o el nombre del cliente.'); return; }
   if (!APPS_SCRIPT_URL){ showToast('Conecta primero con Google Sheets.'); return; }
 
   const btn = document.getElementById('buscarFacturaBtn');
   if (btn.disabled) return;
   btn.disabled = true;
   btn.textContent = 'Buscando...';
+  document.getElementById('abonoListaNombres').style.display = 'none';
 
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'buscarFactura', factura })
+      body: JSON.stringify({ action: 'buscarFactura', factura: texto })
     });
     const data = await res.json();
-    if (!data.success || !data.encontrada){
-      showToast(data.error || 'No se encontró esa factura.');
+    if (data.success && data.encontrada){
+      mostrarResultadoAbono(data);
+      return;
+    }
+
+    // No encontró por número de factura — probamos por nombre de cliente.
+    const res2 = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'buscarPorNombre', nombre: texto })
+    });
+    const data2 = await res2.json();
+    const facturas = (data2 && data2.facturas) || [];
+
+    if (!facturas.length){
+      showToast('No se encontró ninguna factura con ese número o nombre.');
       document.getElementById('abonoResultado').style.display = 'none';
       return;
     }
-    document.getElementById('abonoInfo').innerHTML =
-      `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
-      (data.aviso ? `<div class="aviso-text">${data.aviso}</div>` : '');
-    document.getElementById('abonoResultado').style.display = 'block';
-    document.getElementById('abonoError').style.display = 'none';
+    if (facturas.length === 1){
+      document.getElementById('abonoFactura').value = facturas[0];
+      return buscarFacturaAbono();
+    }
+
+    const lista = document.getElementById('abonoListaNombres');
+    lista.innerHTML = facturas.map(f => `<button class="link-btn" style="display:block; margin:4px 0;" onclick="document.getElementById('abonoFactura').value='${f}'; buscarFacturaAbono();">Factura ${f}</button>`).join('');
+    lista.style.display = 'block';
+    document.getElementById('abonoResultado').style.display = 'none';
   }catch(err){
     showToast('No se pudo conectar con el Sheets.');
   }finally{
@@ -1383,6 +1539,7 @@ async function registrarAbonoBtn(){
     if (data.success){
       showToast('Abono registrado ✓' + (data.estado === 'Vendida' ? ' · Factura saldada' : ''));
       closeModal('overlayAbonos');
+      mostrarFacturaAbono(factura, monto, data.nuevoAbono, data.total, data.saldo, data.estado);
     } else {
       errEl.textContent = data.error || 'No se pudo registrar el abono.';
       errEl.style.display = 'block';
@@ -1540,7 +1697,7 @@ function renderInventarioAdmin(){
       row.innerHTML = `
         <div class="admin-item-row">
           <div style="flex:2"><span class="admin-item-label">${cat.nombre} — ${item.nombre}</span><div style="font-size:14px;">${stock} ${unidad} en stock</div></div>
-          <div><span class="admin-item-label">Entrada</span><input type="number" id="${inputId}" min="0" placeholder="0"></div>
+          <div><span class="admin-item-label">Entrada</span><input type="number" id="${inputId}" min="0" placeholder="0" oninput="toggleAgregarResaltado(this)"></div>
           <button class="link-btn" style="white-space:nowrap;" onclick="agregarEntrada('${cat.nombre.replace(/'/g,"\\'")}','${item.nombre.replace(/'/g,"\\'")}','${codigo}','${inputId}',this)">+ Agregar</button>
         </div>
       `;
@@ -1550,6 +1707,15 @@ function renderInventarioAdmin(){
   if (!wrap.children.length){
     wrap.innerHTML = '<div class="modal-sub" style="margin:0;">No hay productos con inventario todavía.</div>';
   }
+}
+
+function toggleAgregarResaltado(input){
+  const row = input.closest('.admin-item-row');
+  if (!row) return;
+  const btn = row.querySelector('button.link-btn');
+  if (!btn) return;
+  const val = parseFloat(input.value);
+  btn.classList.toggle('btn-resaltado', !!(val && val > 0));
 }
 
 async function agregarEntrada(categoria, producto, codigo, inputId, btn){
