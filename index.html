@@ -773,7 +773,12 @@ function showToast(msg){
 }
 function getVendor(){ return document.getElementById('vendorInput').value.trim(); }
 function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+function closeModal(id){
+  document.getElementById(id).classList.add('hidden');
+  if (id === 'overlayAdmin' && history.state && history.state.modal === 'admin'){
+    history.back();
+  }
+}
 function closeItemModal(id){ editingIndex = null; closeModal(id); }
 
 // ---------- Init ----------
@@ -1562,7 +1567,17 @@ function openAdmin(){
   document.getElementById('adminPin').value = '';
   document.getElementById('adminPinError').style.display = 'none';
   openModal('overlayAdmin');
+  // Truco para que si desliza "atrás" en el celular, solo se cierre
+  // este panel en vez de salir de toda la aplicación.
+  history.pushState({ modal: 'admin' }, '');
 }
+
+window.addEventListener('popstate', () => {
+  const admin = document.getElementById('overlayAdmin');
+  if (admin && !admin.classList.contains('hidden')){
+    closeModal('overlayAdmin');
+  }
+});
 
 function checkAdminPin(){
   adminPinValue = document.getElementById('adminPin').value;
