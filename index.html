@@ -1452,7 +1452,7 @@ function openAbonos(){
 }
 function mostrarResultadoAbono(data){
   document.getElementById('abonoInfo').innerHTML =
-    `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
+    `${data.cliente ? 'Cliente: <b>' + data.cliente + '</b><br>' : ''}Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
     (data.aviso ? `<div class="aviso-text">${data.aviso}</div>` : '');
   document.getElementById('abonoResultado').style.display = 'block';
   document.getElementById('abonoError').style.display = 'none';
