@@ -599,7 +599,7 @@
       <div class="error-text" id="adminPinError">Contraseña incorrecta.</div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal('overlayAdmin')">Cancelar</button>
-        <button class="btn btn-gold" style="flex:1" onclick="checkAdminPin()">Entrar</button>
+        <button class="btn btn-gold" style="flex:1" id="adminPinEntrarBtn" onclick="checkAdminPin()">Entrar</button>
       </div>
     </div>
   </div>
@@ -1521,22 +1521,55 @@ window.addEventListener('popstate', () => {
   }
 });
 
-function checkAdminPin(){
-  adminPinValue = document.getElementById('adminPin').value;
-  // El PIN se valida de verdad en el servidor al guardar; esto solo
-  // evita que cualquiera vea el panel por accidente.
-  document.getElementById('adminPinView').style.display = 'none';
-  document.getElementById('adminConfigView').style.display = 'flex';
+async function checkAdminPin(){
+  const pinEscrito = document.getElementById('adminPin').value;
+  const errEl = document.getElementById('adminPinError');
+  errEl.style.display = 'none';
 
-  adminDraft = JSON.parse(JSON.stringify(categorias));
-  document.getElementById('scriptUrlInput').value = APPS_SCRIPT_URL;
-  document.getElementById('pinActualInput').value = '';
-  document.getElementById('pinNuevoInput').value = '';
-  document.getElementById('pinChangeError').style.display = 'none';
-  switchAdminTab('resumen');
-  renderAdminCategories();
-  loadInventarioAdmin();
-  initResumenFechas();
+  if (!APPS_SCRIPT_URL){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('adminPinEntrarBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verificarPin', pin: pinEscrito })
+    });
+    const data = await res.json();
+
+    if (!data.success){
+      errEl.textContent = 'Contraseña incorrecta.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    adminPinValue = pinEscrito;
+    document.getElementById('adminPinView').style.display = 'none';
+    document.getElementById('adminConfigView').style.display = 'flex';
+
+    adminDraft = JSON.parse(JSON.stringify(categorias));
+    document.getElementById('scriptUrlInput').value = APPS_SCRIPT_URL;
+    document.getElementById('pinActualInput').value = '';
+    document.getElementById('pinNuevoInput').value = '';
+    document.getElementById('pinChangeError').style.display = 'none';
+    switchAdminTab('resumen');
+    renderAdminCategories();
+    loadInventarioAdmin();
+    initResumenFechas();
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
 }
 
 // ---------- Resumen ----------
