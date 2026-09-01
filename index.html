@@ -781,6 +781,14 @@ function initApp(){
   document.getElementById('gastoVendedorNavBtn').addEventListener('click', openGastoVendedor);
   document.getElementById('settingsNavBtn').addEventListener('click', openAdmin);
 
+  // La misma app, la misma conexión al Sheets — pero el ícono de
+  // Admin solo aparece si la URL trae ?admin=1 al final. Así hay
+  // "dos entradas" sin necesitar dos archivos ni dos apps distintas.
+  const esEntradaAdmin = new URLSearchParams(location.search).get('admin') === '1';
+  if (!esEntradaAdmin){
+    document.getElementById('settingsNavBtn').style.display = 'none';
+  }
+
   document.getElementById('facturaEstado').addEventListener('change', function(){
     const campo = document.getElementById('abonoField');
     if (this.value === 'Separada'){
