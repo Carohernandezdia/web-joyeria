@@ -260,7 +260,15 @@
   #facturaPreview{
     background:#fff; color:#111; border-radius:8px; overflow:hidden; margin-top:4px;
   }
-  .invoice-half{ padding:12px 16px; border-bottom:1px dashed #999; }
+  .invoice-half{ padding:12px 16px; border-bottom:1px dashed #999; position:relative; overflow:hidden; }
+  .invoice-watermark{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:65%; opacity:.16; z-index:0; pointer-events:none;
+  }
+  .invoice-top, .invoice-warranty, .invoice-copy-label, .invoice-meta-row,
+  .invoice-table, .invoice-total, .invoice-firma, .invoice-footer{
+    position:relative; z-index:1;
+  }
   .invoice-half:last-child{ border-bottom:none; }
   .invoice-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px; }
   .invoice-brand-block{ display:flex; align-items:center; gap:8px; }
@@ -1295,11 +1303,17 @@ function getLogoDataUri(){
   return img ? img.src : '';
 }
 
+function getWatermarkDataUri(){
+  const img = document.querySelector('img.watermark');
+  return img ? img.src : '';
+}
+
 function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloCopia){
   const hoy = new Date();
   const fechaTexto = ('0'+hoy.getDate()).slice(-2) + '/' + ('0'+(hoy.getMonth()+1)).slice(-2) + '/' + hoy.getFullYear();
   const total = items.reduce((s, i) => s + i.total, 0);
   const logoSrc = getLogoDataUri();
+  const watermarkSrc = getWatermarkDataUri();
 
   const filas = items.map(it => `
     <tr>
@@ -1311,6 +1325,7 @@ function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloC
 
   return `
     <div class="invoice-half">
+      ${watermarkSrc ? `<img class="invoice-watermark" src="${watermarkSrc}" alt="">` : ''}
       <div class="invoice-top">
         <div class="invoice-brand-block">
           ${logoSrc ? `<img class="invoice-logo" src="${logoSrc}" alt="">` : ''}
@@ -1355,9 +1370,11 @@ function construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, sald
   const hoy = new Date();
   const fechaTexto = ('0'+hoy.getDate()).slice(-2) + '/' + ('0'+(hoy.getMonth()+1)).slice(-2) + '/' + hoy.getFullYear();
   const logoSrc = getLogoDataUri();
+  const watermarkSrc = getWatermarkDataUri();
 
   return `
     <div class="invoice-half">
+      ${watermarkSrc ? `<img class="invoice-watermark" src="${watermarkSrc}" alt="">` : ''}
       <div class="invoice-top">
         <div class="invoice-brand-block">
           ${logoSrc ? `<img class="invoice-logo" src="${logoSrc}" alt="">` : ''}
