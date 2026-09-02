@@ -292,9 +292,14 @@
     body *{ visibility:hidden; }
     #facturaPreview, #facturaPreview *{ visibility:visible; }
     #facturaPreview{
-      position:fixed; top:0; left:0; width:100%; margin:0; border-radius:0;
+      position:fixed; top:0; left:0; width:100%; height:100%; margin:0; border-radius:0;
+      display:flex; flex-direction:row;
     }
-    @page{ size: letter; margin: 10mm; }
+    #facturaPreview .invoice-half{
+      flex:1; border-bottom:none; border-right:1px dashed #999;
+    }
+    #facturaPreview .invoice-half:last-child{ border-right:none; }
+    @page{ size: letter landscape; margin: 10mm; }
   }
 
   /* ---------- Admin: página completa ---------- */
@@ -1161,6 +1166,7 @@ function editCartItem(i){
 async function openCheckout(){
   document.getElementById('checkoutError').style.display = 'none';
   document.getElementById('facturaNum').value = 'Generando...';
+  document.getElementById('facturaNum').placeholder = 'Aprox.';
   document.getElementById('clienteNombre').value = '';
   document.getElementById('clienteTelefono').value = '';
   document.getElementById('facturaEstado').value = 'Vendida';
@@ -1174,13 +1180,16 @@ async function openCheckout(){
     return;
   }
   try{
+    // Solo una vista previa — este número NO se gasta todavía. El
+    // número real se pide justo al confirmar, para que cancelar
+    // nunca deje huecos en el consecutivo.
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'siguienteFactura' })
+      body: JSON.stringify({ action: 'verSiguienteFactura' })
     });
     const data = await res.json();
-    document.getElementById('facturaNum').value = data.factura || '';
+    document.getElementById('facturaNum').value = data.factura ? ('Aprox. ' + data.factura) : '';
   }catch(err){
     document.getElementById('facturaNum').value = '';
     showToast('No se pudo generar el número de factura.');
@@ -1190,12 +1199,10 @@ let checkoutEnProceso = false;
 
 async function confirmCheckout(){
   if (checkoutEnProceso) return; // candado inmediato, no depende de que el botón ya se vea deshabilitado
-  const factura = document.getElementById('facturaNum').value.trim();
   const cliente = document.getElementById('clienteNombre').value.trim();
   const telefono = document.getElementById('clienteTelefono').value.trim();
   const estado = document.getElementById('facturaEstado').value;
   const errEl = document.getElementById('checkoutError');
-  if (!factura){ errEl.style.display = 'block'; return; }
 
   const abono = estado === 'Separada'
     ? parseNum(document.getElementById('abonoInicial').value)
@@ -1217,6 +1224,32 @@ async function confirmCheckout(){
   const btn = document.getElementById('confirmCheckoutBtn');
   btn.disabled = true;
   btn.textContent = 'Enviando...';
+
+  let factura;
+  try{
+    // Aquí sí se consume el número de verdad — justo antes de enviar,
+    // nunca antes, para que cancelar no deje huecos en el consecutivo.
+    const resFactura = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'siguienteFactura' })
+    });
+    const dataFactura = await resFactura.json();
+    factura = dataFactura.factura;
+    document.getElementById('facturaNum').value = factura || '';
+  }catch(err){
+    showToast('No se pudo generar el número de factura. Intenta de nuevo.');
+    btn.disabled = false; btn.textContent = 'Confirmar venta';
+    checkoutEnProceso = false;
+    return;
+  }
+
+  if (!factura){
+    showToast('No se pudo generar el número de factura. Intenta de nuevo.');
+    btn.disabled = false; btn.textContent = 'Confirmar venta';
+    checkoutEnProceso = false;
+    return;
+  }
 
   const venta = cart.map(item => ({
     ...item,
