@@ -260,46 +260,42 @@
   #facturaPreview{
     background:#fff; color:#111; border-radius:8px; overflow:hidden; margin-top:4px;
   }
-  .invoice-half{ padding:12px 16px; border-bottom:1px dashed #999; position:relative; overflow:hidden; }
+  .invoice-half{ padding:28px 34px; border-bottom:2px dashed #999; position:relative; overflow:hidden; }
   .invoice-watermark{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:65%; opacity:.16; z-index:0; pointer-events:none;
+    width:55%; opacity:.14; z-index:0; pointer-events:none;
   }
   .invoice-top, .invoice-warranty, .invoice-copy-label, .invoice-meta-row,
   .invoice-table, .invoice-total, .invoice-firma, .invoice-footer{
     position:relative; z-index:1;
   }
   .invoice-half:last-child{ border-bottom:none; }
-  .invoice-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px; }
-  .invoice-brand-block{ display:flex; align-items:center; gap:8px; }
-  .invoice-logo{ width:34px; height:34px; object-fit:contain; flex-shrink:0; }
-  .invoice-brand-name{ font-family:'Cormorant Garamond', serif; font-size:18px; font-weight:700; color:#111; }
-  .invoice-brand-name span{ font-size:11px; font-weight:400; color:#555; margin-left:4px; }
-  .invoice-address{ font-size:9px; color:#666; }
-  .invoice-garantia{ text-align:right; font-size:9px; color:#333; border:1px solid #999; border-radius:4px; padding:4px 8px; white-space:nowrap; }
-  .invoice-garantia-label{ font-weight:700; font-size:9px; text-transform:uppercase; }
-  .invoice-garantia-num{ font-weight:700; color:#b8302a; font-size:13px; }
-  .invoice-warranty{ font-size:8px; color:#777; margin-bottom:6px; line-height:1.3; }
-  .invoice-copy-label{ font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#777; margin-bottom:6px; }
-  .invoice-meta-row{ display:flex; justify-content:space-between; font-size:11px; color:#222; margin-bottom:6px; gap:10px; }
-  .invoice-table{ width:100%; border-collapse:collapse; font-size:11px; margin-bottom:6px; }
-  .invoice-table th, .invoice-table td{ border-bottom:1px solid #ddd; padding:3px 4px; text-align:left; color:#111; }
-  .invoice-total{ font-weight:700; font-size:12px; text-align:right; margin-bottom:6px; color:#111; }
-  .invoice-firma{ font-size:10px; color:#333; margin-bottom:6px; }
-  .invoice-footer{ font-size:10px; color:#555; text-align:center; border-top:1px solid #ddd; padding-top:4px; }
+  .invoice-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:12px; }
+  .invoice-brand-block{ display:flex; align-items:center; gap:14px; }
+  .invoice-logo{ width:54px; height:54px; object-fit:contain; flex-shrink:0; }
+  .invoice-brand-name{ font-family:'Cormorant Garamond', serif; font-size:26px; font-weight:700; color:#111; }
+  .invoice-brand-name span{ font-size:14px; font-weight:400; color:#555; margin-left:6px; }
+  .invoice-address{ font-size:12px; color:#666; margin-top:2px; }
+  .invoice-garantia{ text-align:right; font-size:12px; color:#333; border:1px solid #999; border-radius:6px; padding:8px 14px; white-space:nowrap; }
+  .invoice-garantia-label{ font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
+  .invoice-garantia-num{ font-weight:700; color:#b8302a; font-size:20px; margin:2px 0; }
+  .invoice-warranty{ font-size:10px; color:#777; margin-bottom:14px; line-height:1.4; max-width:560px; }
+  .invoice-copy-label{ font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:#a4791f; font-weight:700; margin-bottom:14px; }
+  .invoice-meta-row{ display:flex; justify-content:space-between; font-size:15px; color:#222; margin-bottom:14px; gap:20px; }
+  .invoice-table{ width:100%; border-collapse:collapse; font-size:14px; margin-bottom:14px; }
+  .invoice-table th{ font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:#666; }
+  .invoice-table th, .invoice-table td{ border-bottom:1px solid #ddd; padding:9px 8px; text-align:left; color:#111; }
+  .invoice-total{ font-weight:700; font-size:17px; text-align:right; margin-bottom:14px; color:#111; }
+  .invoice-firma{ font-size:13px; color:#333; margin-bottom:14px; }
+  .invoice-footer{ font-size:13px; color:#555; text-align:center; border-top:1px solid #ddd; padding-top:12px; }
 
   @media print{
     body *{ visibility:hidden; }
     #facturaPreview, #facturaPreview *{ visibility:visible; }
     #facturaPreview{
-      position:fixed; top:0; left:0; width:100%; height:100%; margin:0; border-radius:0;
-      display:flex; flex-direction:row;
+      position:fixed; top:0; left:0; width:100%; margin:0; border-radius:0;
     }
-    #facturaPreview .invoice-half{
-      flex:1; border-bottom:none; border-right:1px dashed #999;
-    }
-    #facturaPreview .invoice-half:last-child{ border-right:none; }
-    @page{ size: letter landscape; margin: 10mm; }
+    @page{ size: letter; margin: 12mm; }
   }
 
   /* ---------- Admin: página completa ---------- */
