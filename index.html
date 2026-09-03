@@ -144,7 +144,7 @@
     position:fixed; bottom:0; left:0; right:0; z-index:30;
     background: linear-gradient(0deg, #101011, #0b0b0cee);
     border-top:1px solid var(--line);
-    display:flex; justify-content:center; gap: 26px;
+    display:flex; justify-content:center; gap: 16px; overflow-x:auto;
     padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
   }
   .nav-btn{
@@ -260,7 +260,7 @@
   #facturaPreview{
     background:#fff; color:#111; border-radius:8px; overflow:hidden; margin-top:4px;
   }
-  .invoice-half{ padding:28px 34px; border-bottom:2px dashed #999; position:relative; overflow:hidden; }
+  .invoice-half{ padding:28px 34px; border-right:2px dashed #999; position:relative; overflow:hidden; }
   .invoice-watermark{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     width:55%; opacity:.14; z-index:0; pointer-events:none;
@@ -269,10 +269,10 @@
   .invoice-table, .invoice-total, .invoice-firma, .invoice-footer{
     position:relative; z-index:1;
   }
-  .invoice-half:last-child{ border-bottom:none; }
+  .invoice-half:last-child{ border-right:none; }
   .invoice-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:12px; }
   .invoice-brand-block{ display:flex; align-items:center; gap:14px; }
-  .invoice-logo{ width:54px; height:54px; object-fit:contain; flex-shrink:0; }
+  .invoice-logo{ width:78px; height:78px; object-fit:contain; flex-shrink:0; }
   .invoice-brand-name{ font-family:'Cormorant Garamond', serif; font-size:26px; font-weight:700; color:#111; }
   .invoice-brand-name span{ font-size:14px; font-weight:400; color:#555; margin-left:6px; }
   .invoice-address{ font-size:12px; color:#666; margin-top:2px; }
@@ -294,12 +294,12 @@
     #facturaPreview, #facturaPreview *{ visibility:visible; }
     #facturaPreview{
       position:fixed; top:0; left:0; width:100%; height:100%; margin:0; border-radius:0;
-      display:flex; flex-direction:column;
+      display:flex; flex-direction:row;
     }
     #facturaPreview .invoice-half{
       flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center;
     }
-    @page{ size: letter; margin: 12mm; }
+    @page{ size: letter landscape; margin: 12mm; }
   }
 
   /* ---------- Admin: página completa ---------- */
@@ -404,6 +404,10 @@
   <button class="nav-btn" id="gastoVendedorNavBtn">
     <span class="nav-icon">🧾</span>
     Gasto
+  </button>
+  <button class="nav-btn" id="historialNavBtn">
+    <span class="nav-icon">🗂</span>
+    Historial
   </button>
   <button class="nav-btn" id="settingsNavBtn">
     <span class="nav-icon">🔐</span>
@@ -543,6 +547,28 @@
 </div>
 
 <!-- Modal: gasto varios (vendedores) -->
+<!-- Modal: historial de facturas -->
+<div class="overlay center hidden" id="overlayHistorial">
+  <div class="modal" style="max-width:520px;">
+    <h3>🗂 Historial de facturas</h3>
+    <div class="row-2">
+      <div class="field">
+        <label>Desde</label>
+        <input type="date" id="historialDesde">
+      </div>
+      <div class="field">
+        <label>Hasta</label>
+        <input type="date" id="historialHasta">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('overlayHistorial')">Cerrar</button>
+      <button class="btn btn-gold" style="flex:1" id="historialBuscarBtn" onclick="cargarHistorial()">Buscar</button>
+    </div>
+    <div id="historialLista" style="margin-top:16px; max-height:50vh; overflow-y:auto;"></div>
+  </div>
+</div>
+
 <div class="overlay center hidden" id="overlayGastoVendedor">
   <div class="modal">
     <h3>🧾 Gasto varios</h3>
@@ -590,7 +616,6 @@
     <div id="abonoListaNombres" style="display:none; margin-top:14px;"></div>
     <div id="abonoResultado" style="display:none; margin-top:18px;">
       <div class="modal-sub" id="abonoInfo" style="margin-top:0; line-height:1.7;"></div>
-      <button class="btn btn-ghost btn-block" id="reimprimirBtn" onclick="reimprimirFactura()" style="margin-bottom:14px;">🖨 Reimprimir esta factura</button>
       <div class="field">
         <label>Monto a abonar</label>
         <input type="number" id="abonoMonto" min="0" step="1000" placeholder="Ej. 50000">
@@ -630,6 +655,7 @@
         <button class="admin-nav-btn" id="adminTabBtn-inventario" onclick="switchAdminTab('inventario')">📦 Inventario</button>
         <button class="admin-nav-btn" id="adminTabBtn-gastos" onclick="switchAdminTab('gastos')">🧾 Gastos</button>
         <button class="admin-nav-btn" id="adminTabBtn-anular" onclick="switchAdminTab('anular')">🚫 Anular</button>
+        <button class="admin-nav-btn" id="adminTabBtn-editar" onclick="switchAdminTab('editar')">✏️ Editar factura</button>
         <button class="admin-nav-btn" id="adminTabBtn-config" onclick="switchAdminTab('config')">⚙ Configuración</button>
       </nav>
 
@@ -646,6 +672,7 @@
             </div>
           </div>
           <button class="btn btn-gold btn-block" id="resumenBuscarBtn" onclick="cargarResumenRango()">Buscar</button>
+          <button class="btn btn-ghost btn-block" id="resumenImprimirBtn" onclick="imprimirResumen()" style="margin-top:8px; display:none;">🖨 Imprimir este reporte</button>
           <div id="resumenContenido"></div>
         </div>
 
@@ -701,6 +728,18 @@
             <div class="error-text" id="anularError"></div>
             <button class="btn btn-danger btn-block" id="confirmarAnularBtn" onclick="confirmarAnular()">Anular esta factura</button>
           </div>
+        </div>
+
+        <div id="adminTab-editar" style="display:none;">
+          <div class="modal-sub" style="margin-top:0;">Cambia el descuento de una venta ya hecha (ej. si la jefa decide rebajar más después).</div>
+          <div class="field">
+            <label>N° de factura a editar</label>
+            <input type="text" id="editarFacturaInput" placeholder="Ej. 00123">
+          </div>
+          <button class="btn btn-ghost btn-block" id="buscarEditarBtn" onclick="buscarFacturaEditar()">Buscar</button>
+          <div id="editarLineas" style="margin-top:16px;"></div>
+          <div class="error-text" id="editarError"></div>
+          <button class="btn btn-gold btn-block" id="guardarEdicionBtn" onclick="guardarEdicionFacturaBtn()" style="display:none; margin-top:10px;">Guardar cambios</button>
         </div>
 
         <div id="adminTab-config" style="display:none;">
@@ -793,6 +832,7 @@ function initApp(){
   document.getElementById('cartNavBtn').addEventListener('click', () => openModal('overlayCart'));
   document.getElementById('abonosNavBtn').addEventListener('click', openAbonos);
   document.getElementById('gastoVendedorNavBtn').addEventListener('click', openGastoVendedor);
+  document.getElementById('historialNavBtn').addEventListener('click', openHistorial);
   document.getElementById('settingsNavBtn').addEventListener('click', openAdmin);
 
   // La misma app, la misma conexión al Sheets — pero el ícono de
@@ -1271,6 +1311,84 @@ async function confirmCheckout(){
   }
 }
 
+// ---------- Historial de facturas ----------
+function openHistorial(){
+  const hoy = new Date();
+  const hace7 = new Date(hoy.getTime() - 7*24*60*60*1000);
+  const fmtFecha = d => d.toISOString().slice(0,10);
+  document.getElementById('historialDesde').value = fmtFecha(hace7);
+  document.getElementById('historialHasta').value = fmtFecha(hoy);
+  document.getElementById('historialLista').innerHTML = '';
+  openModal('overlayHistorial');
+  cargarHistorial();
+}
+
+async function cargarHistorial(){
+  const desde = document.getElementById('historialDesde').value;
+  const hasta = document.getElementById('historialHasta').value;
+  const lista = document.getElementById('historialLista');
+  if (!desde || !hasta) return;
+  if (!APPS_SCRIPT_URL){ lista.innerHTML = '<div class="modal-sub" style="margin:0;">Conecta primero con Google Sheets.</div>'; return; }
+
+  const btn = document.getElementById('historialBuscarBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+  lista.innerHTML = '<div class="modal-sub" style="margin:0;">Cargando...</div>';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'listarFacturas', desde, hasta })
+    });
+    const data = await res.json();
+    if (!data.success){
+      lista.innerHTML = `<div class="modal-sub" style="margin:0;">${data.error || 'No se pudo cargar.'}</div>`;
+      return;
+    }
+    const facturas = data.facturas || [];
+    if (!facturas.length){
+      lista.innerHTML = '<div class="empty-msg">No hay facturas en ese rango.</div>';
+      return;
+    }
+    lista.innerHTML = facturas.map(f => `
+      <div class="admin-item-card" style="cursor:pointer;" onclick="abrirFacturaDesdeHistorial('${f.factura}')">
+        <div class="admin-item-row">
+          <div style="flex:2">
+            <span class="admin-item-label">Factura ${f.factura} · ${f.estado}</span>
+            <div style="font-size:14px;">${f.cliente || 'Sin nombre'} · ${f.fecha}</div>
+          </div>
+          <div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(f.total)}</div>
+        </div>
+      </div>
+    `).join('');
+  }catch(err){
+    lista.innerHTML = '<div class="modal-sub" style="margin:0;">No se pudo conectar con el Sheets.</div>';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Buscar';
+  }
+}
+
+async function abrirFacturaDesdeHistorial(factura){
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'buscarFactura', factura })
+    });
+    const data = await res.json();
+    if (!data.success || !data.encontrada || !data.items || !data.items.length){
+      showToast('No se pudo abrir esa factura.');
+      return;
+    }
+    closeModal('overlayHistorial');
+    mostrarFactura(data.items, factura, data.cliente || '', '', data.estado);
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }
+}
+
 // ---------- Gasto varios (vendedores) ----------
 function openGastoVendedor(){
   document.getElementById('gastoVendedorDescripcion').value = '';
@@ -1441,27 +1559,13 @@ function openAbonos(){
   document.getElementById('abonoListaNombres').style.display = 'none';
   openModal('overlayAbonos');
 }
-let ultimaBusquedaAbono = null;
-
 function mostrarResultadoAbono(data){
-  ultimaBusquedaAbono = data;
   document.getElementById('abonoInfo').innerHTML =
     `${data.cliente ? 'Cliente: <b>' + data.cliente + '</b><br>' : ''}Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
     (data.aviso ? `<div class="aviso-text">${data.aviso}</div>` : '');
   document.getElementById('abonoResultado').style.display = 'block';
   document.getElementById('abonoError').style.display = 'none';
   document.getElementById('abonoListaNombres').style.display = 'none';
-  const btnReimprimir = document.getElementById('reimprimirBtn');
-  btnReimprimir.style.display = (data.items && data.items.length) ? 'block' : 'none';
-}
-
-function reimprimirFactura(){
-  if (!ultimaBusquedaAbono || !ultimaBusquedaAbono.items || !ultimaBusquedaAbono.items.length){
-    showToast('No hay artículos para reimprimir en esta factura.');
-    return;
-  }
-  const factura = document.getElementById('abonoFactura').value.trim();
-  mostrarFactura(ultimaBusquedaAbono.items, factura, ultimaBusquedaAbono.cliente || '', '', ultimaBusquedaAbono.estado);
 }
 
 async function buscarFacturaAbono(){
@@ -1698,11 +1802,64 @@ async function cargarResumenRango(){
         ${filasDesglose || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
       </div>
     `;
+    ultimoResumen = data;
+    ultimoResumenRango = { desde, hasta };
+    document.getElementById('resumenImprimirBtn').style.display = 'block';
   }catch(err){
     contenido.innerHTML = '<div class="modal-sub" style="margin:16px 0 0;">No se pudo conectar con el Sheets.</div>';
   }finally{
     btn.disabled = false; btn.textContent = 'Buscar';
   }
+}
+
+let ultimoResumen = null;
+let ultimoResumenRango = null;
+
+function imprimirResumen(){
+  if (!ultimoResumen) return;
+  const d = ultimoResumen;
+  const fechaTexto = (f) => { const [y,m,dd] = f.split('-'); return dd+'/'+m+'/'+y; };
+  const logoSrc = getLogoDataUri();
+  const watermarkSrc = getWatermarkDataUri();
+
+  const filasDesglose = (d.desglose || [])
+    .filter(x => x.etiqueta)
+    .map(x => `<tr><td>${x.etiqueta}</td><td>${fmt(x.valor)}</td></tr>`)
+    .join('');
+
+  const html = `
+    <div class="invoice-half" style="border-bottom:none;">
+      ${watermarkSrc ? `<img class="invoice-watermark" src="${watermarkSrc}" alt="">` : ''}
+      <div class="invoice-top">
+        <div class="invoice-brand-block">
+          ${logoSrc ? `<img class="invoice-logo" src="${logoSrc}" alt="">` : ''}
+          <div>
+            <div class="invoice-brand-name">Dalia's <span>Joyería</span></div>
+            <div class="invoice-address">Cra 41 # 40-13, Parque Principal Zaragoza</div>
+          </div>
+        </div>
+        <div class="invoice-garantia">
+          <div class="invoice-garantia-label">Reporte de ventas</div>
+          <div>${fechaTexto(ultimoResumenRango.desde)} — ${fechaTexto(ultimoResumenRango.hasta)}</div>
+        </div>
+      </div>
+      <table class="invoice-table">
+        <tbody>
+          <tr><td><b>Total ventas</b></td><td><b>${fmt(d.totalVentas)}</b></td></tr>
+          <tr><td>Total créditos / abonos</td><td>${fmt(d.totalCreditos)}</td></tr>
+          <tr><td>Total gastos</td><td>${fmt(d.totalGastos)}</td></tr>
+          <tr><td><b>Ganancia bruta</b></td><td><b>${fmt(d.gananciaBruta)}</b></td></tr>
+        </tbody>
+      </table>
+      <div class="invoice-copy-label" style="margin-top:10px;">Desglose por tipo</div>
+      <table class="invoice-table">
+        <tbody>${filasDesglose || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
+      </table>
+      <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
+    </div>
+  `;
+  document.getElementById('facturaPreview').innerHTML = html;
+  openModal('overlayFactura');
 }
 
 let inventarioActual = {}; // clave: código (o categoria::producto) -> cantidad
@@ -1931,7 +2088,7 @@ function addAdminCategory(){
 }
 
 function switchAdminTab(tab){
-  ['resumen','precios','inventario','gastos','anular','config'].forEach(t => {
+  ['resumen','precios','inventario','gastos','anular','editar','config'].forEach(t => {
     document.getElementById('adminTab-' + t).style.display = (t === tab) ? 'block' : 'none';
     document.getElementById('adminTabBtn-' + t).classList.toggle('active', t === tab);
   });
@@ -2055,6 +2212,125 @@ async function confirmarAnular(){
     errEl.style.display = 'block';
   }finally{
     btn.disabled = false; btn.textContent = 'Anular esta factura';
+  }
+}
+
+// ---------- Editar factura (solo Admin) ----------
+let lineasParaEditar = [];
+
+async function buscarFacturaEditar(){
+  const factura = document.getElementById('editarFacturaInput').value.trim();
+  const errEl = document.getElementById('editarError');
+  errEl.style.display = 'none';
+  document.getElementById('editarLineas').innerHTML = '';
+  document.getElementById('guardarEdicionBtn').style.display = 'none';
+
+  if (!factura){ showToast('Escribe el número de factura.'); return; }
+  if (!APPS_SCRIPT_URL){ showToast('Conecta primero con Google Sheets.'); return; }
+
+  const btn = document.getElementById('buscarEditarBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'buscarFacturaParaEditar', pin: adminPinValue, factura })
+    });
+    const data = await res.json();
+    if (!data.success){
+      errEl.textContent = data.error || 'No se pudo buscar.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (!data.encontrada || !data.lineas.length){
+      showToast('No se encontró esa factura, o ya está anulada.');
+      return;
+    }
+    lineasParaEditar = data.lineas;
+    renderLineasEditar();
+    document.getElementById('guardarEdicionBtn').style.display = 'block';
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Buscar';
+  }
+}
+
+function renderLineasEditar(){
+  const wrap = document.getElementById('editarLineas');
+  wrap.innerHTML = lineasParaEditar.map((l, i) => `
+    <div class="admin-item-card">
+      <div class="admin-item-row">
+        <div style="flex:2"><span class="admin-item-label">${l.producto}${l.especificacion ? ' — ' + l.especificacion : ''}</span></div>
+      </div>
+      <div class="admin-item-row">
+        <div>
+          <span class="admin-item-label">Descuento actual</span>
+          <div style="font-size:14px;">${fmt(l.descuentoActual)}</div>
+        </div>
+        <div>
+          <span class="admin-item-label">Nuevo descuento ($)</span>
+          <input type="number" id="editarDescuento_${i}" min="0" step="1000" value="${l.descuentoActual}" oninput="actualizarTotalEditado(${i})">
+        </div>
+      </div>
+      <div class="admin-item-row">
+        <div style="flex:2">Total actual: ${fmt(l.totalActual)}</div>
+        <div id="editarTotalNuevo_${i}" style="text-align:right; font-weight:700; color:var(--gold-light);">Nuevo: ${fmt(l.totalActual)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function actualizarTotalEditado(i){
+  const l = lineasParaEditar[i];
+  const nuevoDescuento = parseNum(document.getElementById('editarDescuento_' + i).value);
+  const nuevoTotal = Math.max(0, l.cantidad * l.precio - nuevoDescuento + l.manoDeObraValor);
+  document.getElementById('editarTotalNuevo_' + i).textContent = 'Nuevo: ' + fmt(nuevoTotal);
+}
+
+async function guardarEdicionFacturaBtn(){
+  const errEl = document.getElementById('editarError');
+  errEl.style.display = 'none';
+
+  const cambios = lineasParaEditar.map((l, i) => ({
+    sheetName: l.sheetName, fila: l.fila,
+    colDescuento: l.colDescuento, colVendida: l.colVendida, colSeparada: l.colSeparada,
+    cantidad: l.cantidad, precio: l.precio, manoDeObraValor: l.manoDeObraValor,
+    estadoLinea: l.estadoLinea,
+    nuevoDescuento: parseNum(document.getElementById('editarDescuento_' + i).value)
+  }));
+
+  const btn = document.getElementById('guardarEdicionBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'guardarEdicionFactura', pin: adminPinValue, cambios })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Factura actualizada ✓');
+      document.getElementById('editarFacturaInput').value = '';
+      document.getElementById('editarLineas').innerHTML = '';
+      btn.style.display = 'none';
+      lineasParaEditar = [];
+    } else {
+      errEl.textContent = data.error || 'No se pudo guardar.';
+      errEl.style.display = 'block';
+    }
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el Sheets.';
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
   }
 }
 
