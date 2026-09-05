@@ -748,13 +748,25 @@
         </div>
 
         <div id="adminTab-editar" style="display:none;">
-          <div class="modal-sub" style="margin-top:0;">Cambia el descuento de una venta ya hecha (ej. si la jefa decide rebajar más después).</div>
+          <div class="modal-sub" style="margin-top:0;">Corrige cualquier dato de una venta ya hecha: nombre, teléfono, especificación, cantidad, precio, descuento o si quedó vendida/separada.</div>
           <div class="field">
             <label>N° de factura a editar</label>
             <input type="text" id="editarFacturaInput" placeholder="Ej. 00123">
           </div>
           <button class="btn btn-ghost btn-block" id="buscarEditarBtn" onclick="buscarFacturaEditar()">Buscar</button>
-          <div id="editarLineas" style="margin-top:16px;"></div>
+          <div id="editarClienteBlock" style="display:none; margin-top:16px;">
+            <div class="row-2">
+              <div class="field">
+                <label>Nombre del cliente</label>
+                <input type="text" id="editarClienteNombre">
+              </div>
+              <div class="field">
+                <label>Teléfono</label>
+                <input type="text" id="editarClienteTelefono">
+              </div>
+            </div>
+          </div>
+          <div id="editarLineas" style="margin-top:8px;"></div>
           <div class="error-text" id="editarError"></div>
           <button class="btn btn-gold btn-block" id="guardarEdicionBtn" onclick="guardarEdicionFacturaBtn()" style="display:none; margin-top:10px;">Guardar cambios</button>
         </div>
@@ -2245,6 +2257,7 @@ async function buscarFacturaEditar(){
   const errEl = document.getElementById('editarError');
   errEl.style.display = 'none';
   document.getElementById('editarLineas').innerHTML = '';
+  document.getElementById('editarClienteBlock').style.display = 'none';
   document.getElementById('guardarEdicionBtn').style.display = 'none';
 
   if (!factura){ showToast('Escribe el número de factura.'); return; }
@@ -2272,6 +2285,9 @@ async function buscarFacturaEditar(){
       return;
     }
     lineasParaEditar = data.lineas;
+    document.getElementById('editarClienteNombre').value = data.cliente || '';
+    document.getElementById('editarClienteTelefono').value = data.telefono || '';
+    document.getElementById('editarClienteBlock').style.display = 'block';
     renderLineasEditar();
     document.getElementById('guardarEdicionBtn').style.display = 'block';
   }catch(err){
@@ -2287,16 +2303,35 @@ function renderLineasEditar(){
   wrap.innerHTML = lineasParaEditar.map((l, i) => `
     <div class="admin-item-card">
       <div class="admin-item-row">
-        <div style="flex:2"><span class="admin-item-label">${l.producto}${l.especificacion ? ' — ' + l.especificacion : ''}</span></div>
+        <div style="flex:2"><span class="admin-item-label">${l.categoria} — ${l.producto}</span></div>
+      </div>
+      <div class="admin-item-row">
+        <div style="flex:2">
+          <span class="admin-item-label">Especificación</span>
+          <input type="text" id="editarEspec_${i}" value="${(l.especificacion || '').toString().replace(/"/g,'&quot;')}">
+        </div>
       </div>
       <div class="admin-item-row">
         <div>
-          <span class="admin-item-label">Descuento actual</span>
-          <div style="font-size:14px;">${fmt(l.descuentoActual)}</div>
+          <span class="admin-item-label">Cantidad / Peso</span>
+          <input type="number" id="editarCantidad_${i}" step="0.01" min="0" value="${l.cantidad}" oninput="actualizarTotalEditado(${i})">
         </div>
         <div>
-          <span class="admin-item-label">Nuevo descuento ($)</span>
+          <span class="admin-item-label">Precio unitario</span>
+          <input type="number" id="editarPrecio_${i}" step="1000" min="0" value="${l.precio}" oninput="actualizarTotalEditado(${i})">
+        </div>
+      </div>
+      <div class="admin-item-row">
+        <div>
+          <span class="admin-item-label">Descuento ($)</span>
           <input type="number" id="editarDescuento_${i}" min="0" step="1000" value="${l.descuentoActual}" oninput="actualizarTotalEditado(${i})">
+        </div>
+        <div>
+          <span class="admin-item-label">Estado</span>
+          <select id="editarEstado_${i}">
+            <option value="Vendida" ${l.estadoLinea === 'Vendida' ? 'selected' : ''}>Vendida</option>
+            <option value="Separada" ${l.estadoLinea === 'Separada' ? 'selected' : ''}>Separada</option>
+          </select>
         </div>
       </div>
       <div class="admin-item-row">
@@ -2309,8 +2344,10 @@ function renderLineasEditar(){
 
 function actualizarTotalEditado(i){
   const l = lineasParaEditar[i];
+  const nuevaCantidad = parseNum(document.getElementById('editarCantidad_' + i).value);
+  const nuevoPrecio = parseNum(document.getElementById('editarPrecio_' + i).value);
   const nuevoDescuento = parseNum(document.getElementById('editarDescuento_' + i).value);
-  const nuevoTotal = Math.max(0, l.cantidad * l.precio - nuevoDescuento + l.manoDeObraValor);
+  const nuevoTotal = Math.max(0, nuevaCantidad * nuevoPrecio - nuevoDescuento + l.manoDeObraValor);
   document.getElementById('editarTotalNuevo_' + i).textContent = 'Nuevo: ' + fmt(nuevoTotal);
 }
 
@@ -2318,12 +2355,20 @@ async function guardarEdicionFacturaBtn(){
   const errEl = document.getElementById('editarError');
   errEl.style.display = 'none';
 
-  const cambios = lineasParaEditar.map((l, i) => ({
+  const cliente = document.getElementById('editarClienteNombre').value.trim();
+  const telefono = document.getElementById('editarClienteTelefono').value.trim();
+
+  const lineas = lineasParaEditar.map((l, i) => ({
     sheetName: l.sheetName, fila: l.fila,
-    colDescuento: l.colDescuento, colVendida: l.colVendida, colSeparada: l.colSeparada,
-    cantidad: l.cantidad, precio: l.precio, manoDeObraValor: l.manoDeObraValor,
-    estadoLinea: l.estadoLinea,
-    nuevoDescuento: parseNum(document.getElementById('editarDescuento_' + i).value)
+    colCliente: l.colCliente, colEspecificacion: l.colEspecificacion,
+    colCantidad: l.colCantidad, colPrecio: l.colPrecio, colDescuento: l.colDescuento,
+    colVendida: l.colVendida, colSeparada: l.colSeparada,
+    manoDeObraValor: l.manoDeObraValor,
+    especificacion: document.getElementById('editarEspec_' + i).value.trim(),
+    cantidad: parseNum(document.getElementById('editarCantidad_' + i).value),
+    precio: parseNum(document.getElementById('editarPrecio_' + i).value),
+    descuentoActual: parseNum(document.getElementById('editarDescuento_' + i).value),
+    estadoLinea: document.getElementById('editarEstado_' + i).value
   }));
 
   const btn = document.getElementById('guardarEdicionBtn');
@@ -2335,13 +2380,14 @@ async function guardarEdicionFacturaBtn(){
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'guardarEdicionFactura', pin: adminPinValue, cambios })
+      body: JSON.stringify({ action: 'guardarEdicionFactura', pin: adminPinValue, cliente, telefono, lineas })
     });
     const data = await res.json();
     if (data.success){
       showToast('Factura actualizada ✓');
       document.getElementById('editarFacturaInput').value = '';
       document.getElementById('editarLineas').innerHTML = '';
+      document.getElementById('editarClienteBlock').style.display = 'none';
       btn.style.display = 'none';
       lineasParaEditar = [];
     } else {
@@ -2509,4 +2555,3 @@ function parseNum(val){
 </script>
 </body>
 </html>
-
