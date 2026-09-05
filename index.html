@@ -1818,6 +1818,43 @@ async function cargarResumenRango(){
         </div>
       `).join('');
 
+    const filasGramos = (data.desglosePorGramos || [])
+      .filter(d => d.etiqueta)
+      .map(d => `
+        <div class="admin-item-card">
+          <div class="admin-item-row">
+            <div style="flex:2">${d.etiqueta}</div>
+            <div style="text-align:right; font-weight:600;">${d.gramos.toFixed(2)} g</div>
+          </div>
+        </div>
+      `).join('');
+
+    const filasGastos = (data.listaGastos || [])
+      .map(g => `
+        <div class="admin-item-card">
+          <div class="admin-item-row">
+            <div style="flex:2">
+              <span class="admin-item-label">${g.categoria}${g.descripcion ? ' — ' + g.descripcion : ''}</span>
+              <div style="font-size:14px;">${g.fecha}${g.vendedor ? ' · ' + g.vendedor : ''}</div>
+            </div>
+            <div style="text-align:right; font-weight:600;">${fmt(g.valor)}</div>
+          </div>
+        </div>
+      `).join('');
+
+    const filasEntradas = (data.listaEntradas || [])
+      .map(e => `
+        <div class="admin-item-card">
+          <div class="admin-item-row">
+            <div style="flex:2">
+              <span class="admin-item-label">${e.categoria} — ${e.producto}</span>
+              <div style="font-size:14px;">${e.fecha}</div>
+            </div>
+            <div style="text-align:right; font-weight:600;">+${e.cantidad}</div>
+          </div>
+        </div>
+      `).join('');
+
     contenido.innerHTML = `
       <div class="admin-item-card" style="border-color:var(--gold-deep);">
         <div class="admin-item-row"><div style="flex:2">Total ventas</div><div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(data.totalVentas)}</div></div>
@@ -1832,8 +1869,20 @@ async function cargarResumenRango(){
         <div class="admin-item-row"><div style="flex:2">Ganancia bruta</div><div style="text-align:right; font-weight:700;">${fmt(data.gananciaBruta)}</div></div>
       </div>
       <div class="admin-section">
-        <h4>Desglose por tipo</h4>
+        <h4>Desglose por tipo ($)</h4>
         ${filasDesglose || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
+      </div>
+      <div class="admin-section">
+        <h4>Oro vendido (gramos)</h4>
+        ${filasGramos || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
+      </div>
+      <div class="admin-section">
+        <h4>Gastos del rango</h4>
+        ${filasGastos || '<div class="modal-sub" style="margin:0;">Sin gastos en este rango.</div>'}
+      </div>
+      <div class="admin-section">
+        <h4>Entradas de inventario del rango</h4>
+        ${filasEntradas || '<div class="modal-sub" style="margin:0;">Sin entradas en este rango.</div>'}
       </div>
     `;
     ultimoResumen = data;
@@ -1859,6 +1908,11 @@ function imprimirResumen(){
   const filasDesglose = (d.desglose || [])
     .filter(x => x.etiqueta)
     .map(x => `<tr><td>${x.etiqueta}</td><td>${fmt(x.valor)}</td></tr>`)
+    .join('');
+
+  const filasGramos = (d.desglosePorGramos || [])
+    .filter(x => x.etiqueta)
+    .map(x => `<tr><td>${x.etiqueta}</td><td>${x.gramos.toFixed(2)} g</td></tr>`)
     .join('');
 
   const html = `
@@ -1888,6 +1942,10 @@ function imprimirResumen(){
       <div class="invoice-copy-label" style="margin-top:10px;">Desglose por tipo</div>
       <table class="invoice-table">
         <tbody>${filasDesglose || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
+      </table>
+      <div class="invoice-copy-label" style="margin-top:10px;">Oro vendido (gramos)</div>
+      <table class="invoice-table">
+        <tbody>${filasGramos || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
       <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
     </div>
