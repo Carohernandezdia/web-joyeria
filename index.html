@@ -1821,7 +1821,7 @@ async function cargarResumenRango(){
       .map(d => `
         <div class="admin-item-card">
           <div class="admin-item-row">
-            <div style="flex:2">${d.etiqueta}</div>
+            <div style="flex:2">${d.etiqueta}${d.gramos ? ' (' + d.gramos.toFixed(2) + ' g)' : ''}</div>
             <div style="text-align:right; font-weight:600;">${fmt(d.valor)}</div>
           </div>
         </div>
@@ -1832,19 +1832,23 @@ async function cargarResumenRango(){
       .map(d => `
         <div class="admin-item-card">
           <div class="admin-item-row">
-            <div style="flex:2">${d.etiqueta}</div>
+            <div style="flex:2">${d.etiqueta}${d.gramos ? ' (' + d.gramos.toFixed(2) + ' g)' : ''}</div>
             <div style="text-align:right; font-weight:600;">${fmt(d.valor)}</div>
           </div>
         </div>
       `).join('');
 
-    const filasGramos = (data.desglosePorGramos || [])
-      .filter(d => d.etiqueta)
-      .map(d => `
+    const filasInventario = (data.inventarioActual || [])
+      .map(inv => `
         <div class="admin-item-card">
           <div class="admin-item-row">
-            <div style="flex:2">${d.etiqueta}</div>
-            <div style="text-align:right; font-weight:600;">${d.gramos.toFixed(2)} g</div>
+            <div style="flex:2"><span class="admin-item-label">${inv.categoria} — ${inv.producto}</span></div>
+          </div>
+          <div class="admin-item-row" style="font-size:13px; color:var(--text-dim); gap:6px;">
+            <div>Inicial: ${inv.stockInicial}</div>
+            <div>Entradas: ${inv.entradas}</div>
+            <div>Salidas: ${inv.salidas}</div>
+            <div style="font-weight:700; color:var(--gold-light);">Saldo: ${inv.saldo}</div>
           </div>
         </div>
       `).join('');
@@ -1889,16 +1893,16 @@ async function cargarResumenRango(){
         <div class="admin-item-row"><div style="flex:2">Ganancia bruta (solo ventas − gastos)</div><div style="text-align:right; font-weight:700;">${fmt(data.gananciaBruta)}</div></div>
       </div>
       <div class="admin-section">
-        <h4>Desglose por tipo — Vendido ($)</h4>
+        <h4>Desglose — Vendido (gramaje y $)</h4>
         ${filasVendido || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
       </div>
       <div class="admin-section">
-        <h4>Desglose por tipo — Separado ($)</h4>
+        <h4>Desglose — Separado (gramaje y $)</h4>
         ${filasSeparado || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
       </div>
       <div class="admin-section">
-        <h4>Oro vendido (gramos)</h4>
-        ${filasGramos || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
+        <h4>Inventario actual</h4>
+        ${filasInventario || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
       </div>
       <div class="admin-section">
         <h4>Gastos del rango</h4>
@@ -1931,17 +1935,16 @@ function imprimirResumen(){
 
   const filasVendido = (d.desgloseVendido || [])
     .filter(x => x.etiqueta)
-    .map(x => `<tr><td>${x.etiqueta}</td><td>${fmt(x.valor)}</td></tr>`)
+    .map(x => `<tr><td>${x.etiqueta}${x.gramos ? ' (' + x.gramos.toFixed(2) + ' g)' : ''}</td><td>${fmt(x.valor)}</td></tr>`)
     .join('');
 
   const filasSeparado = (d.desgloseSeparado || [])
     .filter(x => x.etiqueta)
-    .map(x => `<tr><td>${x.etiqueta}</td><td>${fmt(x.valor)}</td></tr>`)
+    .map(x => `<tr><td>${x.etiqueta}${x.gramos ? ' (' + x.gramos.toFixed(2) + ' g)' : ''}</td><td>${fmt(x.valor)}</td></tr>`)
     .join('');
 
-  const filasGramos = (d.desglosePorGramos || [])
-    .filter(x => x.etiqueta)
-    .map(x => `<tr><td>${x.etiqueta}</td><td>${x.gramos.toFixed(2)} g</td></tr>`)
+  const filasInventario = (d.inventarioActual || [])
+    .map(inv => `<tr><td>${inv.categoria} — ${inv.producto}</td><td>Inicial ${inv.stockInicial} · Entradas ${inv.entradas} · Salidas ${inv.salidas} · <b>Saldo ${inv.saldo}</b></td></tr>`)
     .join('');
 
   const html = `
@@ -1976,9 +1979,9 @@ function imprimirResumen(){
       <table class="invoice-table">
         <tbody>${filasSeparado || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
-      <div class="invoice-copy-label" style="margin-top:10px;">Oro vendido (gramos)</div>
+      <div class="invoice-copy-label" style="margin-top:10px;">Inventario actual</div>
       <table class="invoice-table">
-        <tbody>${filasGramos || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
+        <tbody>${filasInventario || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
       <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
     </div>
