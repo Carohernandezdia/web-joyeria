@@ -316,6 +316,22 @@
     #facturaPreview .invoice-total{ font-size:11px; margin-bottom:6px; }
     #facturaPreview .invoice-firma{ font-size:8px; margin-bottom:6px; }
     #facturaPreview .invoice-footer{ font-size:8px; padding-top:6px; }
+
+    /* El reporte de resumen NO comparte hoja con nada más — usa
+       tamaños normales, de página completa, no los chiquitos de la
+       factura de dos copias. */
+    #facturaPreview.modo-reporte{ height:auto; }
+    #facturaPreview .reporte-print{ padding:20px 26px; }
+    #facturaPreview .reporte-print .invoice-logo{ width:56px; height:56px; }
+    #facturaPreview .reporte-print .invoice-brand-name{ font-size:22px; }
+    #facturaPreview .reporte-print .invoice-brand-name span{ font-size:12px; }
+    #facturaPreview .reporte-print .invoice-address{ font-size:11px; }
+    #facturaPreview .reporte-print .invoice-garantia{ font-size:11px; padding:6px 10px; }
+    #facturaPreview .reporte-print .invoice-garantia-label{ font-size:10px; }
+    #facturaPreview .reporte-print .invoice-copy-label{ font-size:14px; margin:14px 0 8px; }
+    #facturaPreview .reporte-print .invoice-table{ font-size:13px; margin-bottom:10px; }
+    #facturaPreview .reporte-print .invoice-table th, #facturaPreview .reporte-print .invoice-table td{ padding:6px 7px; }
+    #facturaPreview .reporte-print .invoice-footer{ font-size:11px; padding-top:10px; }
     @page{ size: letter; margin: 12mm; }
   }
 
@@ -1534,7 +1550,8 @@ function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloC
 }
 
 function resetMitadImpresion(){
-  // Ya no se necesita: la posición en la hoja la maneja usted a mano.
+  const preview = document.getElementById('facturaPreview');
+  if (preview) preview.classList.remove('modo-reporte');
 }
 
 function mostrarFactura(items, factura, cliente, telefono, estado){
@@ -1589,7 +1606,9 @@ function mostrarFacturaAbono(factura, montoAbonado, abonoTotal, total, saldo, es
   const html =
     construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, 'Copia cliente') +
     construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, 'Copia tienda');
-  document.getElementById('facturaPreview').innerHTML = html;
+  const preview = document.getElementById('facturaPreview');
+  preview.innerHTML = html;
+  preview.classList.remove('modo-reporte');
   openModal('overlayFactura');
 }
 
@@ -1947,8 +1966,16 @@ function imprimirResumen(){
     .map(inv => `<tr><td>${inv.categoria} — ${inv.producto}</td><td>Inicial ${inv.stockInicial} · Entradas ${inv.entradas} · Salidas ${inv.salidas} · <b>Saldo ${inv.saldo}</b></td></tr>`)
     .join('');
 
+  const filasGastosReporte = (d.listaGastos || [])
+    .map(g => `<tr><td>${g.categoria}${g.descripcion ? ' — ' + g.descripcion : ''} (${g.fecha}${g.vendedor ? ' · ' + g.vendedor : ''})</td><td>${fmt(g.valor)}</td></tr>`)
+    .join('');
+
+  const filasEntradasReporte = (d.listaEntradas || [])
+    .map(e => `<tr><td>${e.categoria} — ${e.producto} (${e.fecha})</td><td>+${e.cantidad}</td></tr>`)
+    .join('');
+
   const html = `
-    <div class="invoice-half" style="border-bottom:none;">
+    <div class="invoice-half reporte-print" style="border-bottom:none;">
       ${watermarkSrc ? `<img class="invoice-watermark" src="${watermarkSrc}" alt="">` : ''}
       <div class="invoice-top">
         <div class="invoice-brand-block">
@@ -1971,22 +1998,32 @@ function imprimirResumen(){
           <tr><td><b>Ganancia bruta</b></td><td><b>${fmt(d.gananciaBruta)}</b></td></tr>
         </tbody>
       </table>
-      <div class="invoice-copy-label" style="margin-top:10px;">Desglose — Vendido</div>
+      <div class="invoice-copy-label">Desglose — Vendido</div>
       <table class="invoice-table">
         <tbody>${filasVendido || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
-      <div class="invoice-copy-label" style="margin-top:10px;">Desglose — Separado</div>
+      <div class="invoice-copy-label">Desglose — Separado</div>
       <table class="invoice-table">
         <tbody>${filasSeparado || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
-      <div class="invoice-copy-label" style="margin-top:10px;">Inventario actual</div>
+      <div class="invoice-copy-label">Inventario actual</div>
       <table class="invoice-table">
         <tbody>${filasInventario || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
+      </table>
+      <div class="invoice-copy-label">Gastos del rango</div>
+      <table class="invoice-table">
+        <tbody>${filasGastosReporte || '<tr><td colspan="2">Sin gastos en este rango.</td></tr>'}</tbody>
+      </table>
+      <div class="invoice-copy-label">Entradas de inventario del rango</div>
+      <table class="invoice-table">
+        <tbody>${filasEntradasReporte || '<tr><td colspan="2">Sin entradas en este rango.</td></tr>'}</tbody>
       </table>
       <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
     </div>
   `;
-  document.getElementById('facturaPreview').innerHTML = html;
+  const preview = document.getElementById('facturaPreview');
+  preview.innerHTML = html;
+  preview.classList.add('modo-reporte');
   openModal('overlayFactura');
 }
 
