@@ -289,12 +289,20 @@
   .invoice-firma{ font-size:13px; color:#333; margin-bottom:14px; }
   .invoice-footer{ font-size:13px; color:#555; text-align:center; border-top:1px solid #ddd; padding-top:12px; }
 
-  @media print{
+@media print{
     html, body{ background:#fff !important; }
-    body *{ visibility:hidden; }
-    #facturaPreview, #facturaPreview *{ visibility:visible; }
+    body > *:not(#overlayFactura){ display:none !important; }
+    #overlayFactura{
+      display:block !important; position:static !important; background:#fff !important;
+      inset:auto !important; padding:0 !important;
+    }
+    #overlayFactura .modal{
+      max-width:none !important; width:100% !important; margin:0 !important;
+      padding:0 !important; background:#fff !important; box-shadow:none !important; border:none !important;
+    }
+    #overlayFactura h3, #overlayFactura .modal-actions{ display:none !important; }
     #facturaPreview{
-      position:fixed; top:0; left:0; width:100%; height:33.333%; margin:0; border-radius:0;
+      width:100%; margin:0; border-radius:0;
       display:flex; flex-direction:row;
     }
     #facturaPreview .invoice-half{
