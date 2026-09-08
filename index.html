@@ -289,7 +289,7 @@
   .invoice-firma{ font-size:13px; color:#333; margin-bottom:14px; }
   .invoice-footer{ font-size:13px; color:#555; text-align:center; border-top:1px solid #ddd; padding-top:12px; }
 
-@media print{
+  @media print{
     html, body{ background:#fff !important; }
     body > *:not(#overlayFactura){ display:none !important; }
     #overlayFactura{
@@ -766,6 +766,10 @@
           <button class="btn btn-ghost btn-block" id="buscarAnularBtn" onclick="buscarFacturaAnular()">Buscar</button>
           <div id="anularResultado" style="display:none; margin-top:16px;">
             <div class="modal-sub" id="anularInfo" style="margin-top:0; line-height:1.7;"></div>
+            <div class="field">
+              <label>Motivo de la anulación</label>
+              <input type="text" id="anularMotivoInput" placeholder="Ej. Cliente se arrepintió">
+            </div>
             <div class="error-text" id="anularError"></div>
             <button class="btn btn-danger btn-block" id="confirmarAnularBtn" onclick="confirmarAnular()">Anular esta factura</button>
           </div>
@@ -1420,6 +1424,7 @@ async function cargarHistorial(){
           <div style="flex:2">
             <span class="admin-item-label">Factura ${f.factura} · ${f.estado}</span>
             <div style="font-size:14px;">${f.cliente || 'Sin nombre'} · ${f.fecha}</div>
+            ${f.estado === 'Anulada' && f.motivoAnulacion ? `<div style="font-size:13px; color:var(--danger);">Motivo: ${f.motivoAnulacion}</div>` : ''}
           </div>
           <div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(f.total)}</div>
         </div>
@@ -1571,11 +1576,19 @@ function mostrarFactura(items, factura, cliente, telefono, estado){
   openModal('overlayFactura');
 }
 
-function construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, tituloCopia){
+function construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, tituloCopia){
   const hoy = new Date();
   const fechaTexto = ('0'+hoy.getDate()).slice(-2) + '/' + ('0'+(hoy.getMonth()+1)).slice(-2) + '/' + hoy.getFullYear();
   const logoSrc = getLogoDataUri();
   const watermarkSrc = getWatermarkDataUri();
+
+  const filasProductos = (items || []).map(it => `
+    <tr>
+      <td>${it.peso ? it.peso + ' g' : (it.cantidad || 1)}</td>
+      <td>${it.tipoOroOProducto}${it.especificacion ? ' — ' + it.especificacion : ''}</td>
+      <td>${fmt(it.total)}</td>
+    </tr>
+  `).join('');
 
   return `
     <div class="invoice-half">
@@ -1595,6 +1608,11 @@ function construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, sald
         </div>
       </div>
       <div class="invoice-copy-label">${tituloCopia}</div>
+      ${cliente ? `<div class="invoice-meta-row"><div>Cliente: ${cliente}</div></div>` : ''}
+      <table class="invoice-table">
+        <thead><tr><th>Cant.</th><th>Descripción</th><th>Vr. Total</th></tr></thead>
+        <tbody>${filasProductos}</tbody>
+      </table>
       <table class="invoice-table">
         <thead><tr><th>Concepto</th><th></th><th>Valor</th></tr></thead>
         <tbody>
@@ -1610,10 +1628,10 @@ function construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, sald
   `;
 }
 
-function mostrarFacturaAbono(factura, montoAbonado, abonoTotal, total, saldo, estado){
+function mostrarFacturaAbono(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado){
   const html =
-    construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, 'Copia cliente') +
-    construirReciboAbonoHTML(factura, montoAbonado, abonoTotal, total, saldo, estado, 'Copia tienda');
+    construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, 'Copia cliente') +
+    construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, 'Copia tienda');
   const preview = document.getElementById('facturaPreview');
   preview.innerHTML = html;
   preview.classList.remove('modo-reporte');
@@ -1632,6 +1650,7 @@ function openAbonos(){
 function mostrarResultadoAbono(data){
   document.getElementById('abonoInfo').innerHTML =
     `${data.cliente ? 'Cliente: <b>' + data.cliente + '</b><br>' : ''}Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b><br>Saldo: <b>${fmt(data.saldo)}</b>` +
+    (data.estado === 'Anulada' ? `<div class="aviso-text">Motivo de anulación: ${data.motivoAnulacion || '(no se registró)'}</div>` : '') +
     (data.aviso ? `<div class="aviso-text">${data.aviso}</div>` : '');
   document.getElementById('abonoResultado').style.display = 'block';
   document.getElementById('abonoError').style.display = 'none';
@@ -1718,7 +1737,7 @@ async function registrarAbonoBtn(){
     if (data.success){
       showToast('Abono registrado ✓' + (data.estado === 'Vendida' ? ' · Factura saldada' : ''));
       closeModal('overlayAbonos');
-      mostrarFacturaAbono(factura, monto, data.nuevoAbono, data.total, data.saldo, data.estado);
+      mostrarFacturaAbono(factura, data.cliente, data.items, monto, data.nuevoAbono, data.total, data.saldo, data.estado);
     } else {
       errEl.textContent = data.error || 'No se pudo registrar el abono.';
       errEl.style.display = 'block';
@@ -2341,7 +2360,9 @@ async function buscarFacturaAnular(){
     }
     facturaParaAnular = factura;
     document.getElementById('anularInfo').innerHTML =
-      `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b>`;
+      `Estado: <b>${data.estado}</b><br>Total: <b>${fmt(data.total)}</b><br>Abonado: <b>${fmt(data.abonoActual)}</b>` +
+      (data.estado === 'Anulada' ? `<div class="aviso-text">Ya está anulada. Motivo: ${data.motivoAnulacion || '(no se registró)'}</div>` : '');
+    document.getElementById('anularMotivoInput').value = '';
     document.getElementById('anularResultado').style.display = 'block';
     document.getElementById('anularError').style.display = 'none';
   }catch(err){
@@ -2353,6 +2374,9 @@ async function buscarFacturaAnular(){
 
 async function confirmarAnular(){
   if (!facturaParaAnular) return;
+  const motivo = document.getElementById('anularMotivoInput').value.trim();
+  if (!motivo){ showToast('Escribe el motivo de la anulación.'); return; }
+
   const ok = confirm('¿Seguro que quiere anular la factura ' + facturaParaAnular + '? Esto devuelve la mercancía al inventario y no se puede deshacer.');
   if (!ok) return;
 
@@ -2368,7 +2392,7 @@ async function confirmarAnular(){
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'anularFactura', pin: adminPinValue, factura: facturaParaAnular })
+      body: JSON.stringify({ action: 'anularFactura', pin: adminPinValue, factura: facturaParaAnular, motivo })
     });
     const data = await res.json();
     if (data.success){
