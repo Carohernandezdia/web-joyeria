@@ -300,12 +300,14 @@
     #overlayFactura .modal{
       max-width:none !important; width:100% !important; margin:0 !important;
       padding:0 !important; background:#fff !important; box-shadow:none !important; border:none !important;
+      max-height:none !important; overflow:visible !important;
     }
     #overlayFactura h3, #overlayFactura .modal-actions{ display:none !important; }
     #facturaPreview{
-      width:100%; margin:0; border-radius:0;
+      width:100%; margin:0; border-radius:0; overflow:visible !important;
       display:flex; flex-direction:row;
     }
+    #facturaPreview .invoice-half{ overflow:visible !important; }
     #facturaPreview .invoice-half{
       flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center;
       padding:12px 14px;
