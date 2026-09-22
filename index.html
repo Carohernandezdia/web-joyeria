@@ -746,6 +746,22 @@
 
         <div id="adminTab-inventario" style="display:none;">
           <div id="adminInventario"></div>
+
+          <div class="admin-section">
+            <h4>Corregir entradas registradas</h4>
+            <div class="row-2">
+              <div class="field">
+                <label>Desde</label>
+                <input type="date" id="entradasListaDesde">
+              </div>
+              <div class="field">
+                <label>Hasta</label>
+                <input type="date" id="entradasListaHasta">
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-block" id="entradasListaBuscarBtn" onclick="cargarListaEntradas()">Buscar entradas</button>
+            <div id="entradasListaContenido" style="margin-top:14px;"></div>
+          </div>
         </div>
 
         <div id="adminTab-gastos" style="display:none;">
@@ -2434,6 +2450,135 @@ async function registrarGastoBtn(){
     errEl.style.display = 'block';
   }finally{
     btn.disabled = false; btn.textContent = 'Registrar gasto';
+  }
+}
+
+// ---------- Corregir entradas de inventario ----------
+let listaEntradasActual = [];
+
+async function cargarListaEntradas(){
+  const desde = document.getElementById('entradasListaDesde').value;
+  const hasta = document.getElementById('entradasListaHasta').value;
+  const cont = document.getElementById('entradasListaContenido');
+  if (!desde || !hasta){ showToast('Escoge las dos fechas.'); return; }
+  if (!APPS_SCRIPT_URL){ cont.innerHTML = '<div class="modal-sub" style="margin:0;">Conecta primero con Google Sheets.</div>'; return; }
+
+  const btn = document.getElementById('entradasListaBuscarBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+  cont.innerHTML = '<div class="modal-sub" style="margin:0;">Cargando...</div>';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'listarEntradasInventario', pin: adminPinValue, desde, hasta })
+    });
+    const data = await res.json();
+    if (!data.success){
+      cont.innerHTML = `<div class="modal-sub" style="margin:0;">${data.error || 'No se pudo cargar.'}</div>`;
+      return;
+    }
+    listaEntradasActual = data.entradas || [];
+    renderListaEntradas();
+  }catch(err){
+    cont.innerHTML = '<div class="modal-sub" style="margin:0;">No se pudo conectar con el Sheets.</div>';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Buscar entradas';
+  }
+}
+
+function renderListaEntradas(){
+  const cont = document.getElementById('entradasListaContenido');
+  if (!listaEntradasActual.length){
+    cont.innerHTML = '<div class="empty-msg">No hay entradas en ese rango.</div>';
+    return;
+  }
+  cont.innerHTML = listaEntradasActual.map((e, i) => `
+    <div class="admin-item-card">
+      <div id="entradaVista_${i}">
+        <div class="admin-item-row">
+          <div style="flex:2">
+            <span class="admin-item-label">${e.categoria} — ${e.producto}</span>
+            <div style="font-size:14px;">${e.fecha}</div>
+          </div>
+          <div style="text-align:right; font-weight:700; color:var(--gold-light);">+${e.cantidad}</div>
+        </div>
+        <div class="modal-actions" style="margin-top:6px;">
+          <button class="link-btn" onclick="mostrarEdicionEntrada(${i})">Editar</button>
+          <button class="link-btn" style="color:var(--danger);" onclick="eliminarEntradaBtn(${i})">Eliminar</button>
+        </div>
+      </div>
+      <div id="entradaEdicion_${i}" style="display:none;">
+        <div class="field">
+          <label>Cantidad correcta</label>
+          <input type="number" id="entradaEditCantidad_${i}" min="0.01" step="0.01" value="${e.cantidad}">
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="cancelarEdicionEntrada(${i})">Cancelar</button>
+          <button class="btn btn-gold" style="flex:1" onclick="guardarEdicionEntrada(${i})">Guardar</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function mostrarEdicionEntrada(i){
+  document.getElementById('entradaVista_' + i).style.display = 'none';
+  document.getElementById('entradaEdicion_' + i).style.display = 'block';
+}
+
+function cancelarEdicionEntrada(i){
+  document.getElementById('entradaVista_' + i).style.display = 'block';
+  document.getElementById('entradaEdicion_' + i).style.display = 'none';
+}
+
+async function guardarEdicionEntrada(i){
+  const e = listaEntradasActual[i];
+  const cantidad = parseNum(document.getElementById('entradaEditCantidad_' + i).value);
+  if (!cantidad || cantidad <= 0){ showToast('Escribe una cantidad válida.'); return; }
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'editarEntradaInventario', pin: adminPinValue, fila: e.fila, cantidad })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Entrada actualizada ✓');
+      listaEntradasActual[i] = { ...e, cantidad };
+      renderListaEntradas();
+    } else {
+      showToast(data.error || 'No se pudo guardar.');
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }
+}
+
+async function eliminarEntradaBtn(i){
+  const e = listaEntradasActual[i];
+  const ok = confirm(`¿Borrar la entrada de ${e.cantidad} de "${e.producto}" del ${e.fecha}? Esto descuenta esa cantidad del inventario.`);
+  if (!ok) return;
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'eliminarEntradaInventario', pin: adminPinValue, fila: e.fila })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Entrada eliminada ✓');
+      listaEntradasActual.splice(i, 1);
+      renderListaEntradas();
+    } else {
+      showToast(data.error || 'No se pudo eliminar.');
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
   }
 }
 
