@@ -2855,6 +2855,12 @@ function renderLineasEditar(){
           <input type="number" id="editarDescuento_${i}" min="0" step="1000" value="${l.descuentoActual}" oninput="actualizarTotalEditado(${i})">
         </div>
         <div>
+          <span class="admin-item-label">Mano de obra ($)</span>
+          <input type="number" id="editarManoDeObra_${i}" min="0" step="1000" value="${l.manoDeObraValor}" oninput="actualizarTotalEditado(${i})">
+        </div>
+      </div>
+      <div class="admin-item-row">
+        <div>
           <span class="admin-item-label">Estado</span>
           <select id="editarEstado_${i}">
             <option value="Vendida" ${l.estadoLinea === 'Vendida' ? 'selected' : ''}>Vendida</option>
@@ -2871,11 +2877,11 @@ function renderLineasEditar(){
 }
 
 function actualizarTotalEditado(i){
-  const l = lineasParaEditar[i];
   const nuevaCantidad = parseNum(document.getElementById('editarCantidad_' + i).value);
   const nuevoPrecio = parseNum(document.getElementById('editarPrecio_' + i).value);
   const nuevoDescuento = parseNum(document.getElementById('editarDescuento_' + i).value);
-  const nuevoTotal = Math.max(0, nuevaCantidad * nuevoPrecio - nuevoDescuento + l.manoDeObraValor);
+  const nuevaManoDeObra = parseNum(document.getElementById('editarManoDeObra_' + i).value);
+  const nuevoTotal = Math.max(0, nuevaCantidad * nuevoPrecio - nuevoDescuento + nuevaManoDeObra);
   document.getElementById('editarTotalNuevo_' + i).textContent = 'Nuevo: ' + fmt(nuevoTotal);
 }
 
@@ -2890,13 +2896,14 @@ async function guardarEdicionFacturaBtn(){
     sheetName: l.sheetName, fila: l.fila,
     colCliente: l.colCliente, colEspecificacion: l.colEspecificacion,
     colCantidad: l.colCantidad, colPrecio: l.colPrecio, colDescuento: l.colDescuento,
+    colManoDeObra: l.colManoDeObra,
     colVendida: l.colVendida, colSeparada: l.colSeparada,
-    manoDeObraValor: l.manoDeObraValor,
     categoria: l.categoria, producto: l.producto, codigo: l.codigo,
     especificacion: document.getElementById('editarEspec_' + i).value.trim(),
     cantidad: parseNum(document.getElementById('editarCantidad_' + i).value),
     precio: parseNum(document.getElementById('editarPrecio_' + i).value),
     descuentoActual: parseNum(document.getElementById('editarDescuento_' + i).value),
+    manoDeObraValor: parseNum(document.getElementById('editarManoDeObra_' + i).value),
     estadoLinea: document.getElementById('editarEstado_' + i).value
   }));
 
