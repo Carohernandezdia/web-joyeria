@@ -287,6 +287,12 @@
   .invoice-table th{ font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:#666; }
   .invoice-table th, .invoice-table td{ border-bottom:1px solid #ddd; padding:9px 8px; text-align:left; color:#111; }
   .invoice-total{ font-weight:700; font-size:17px; text-align:right; margin-bottom:14px; color:#111; }
+  .invoice-stamp{
+    text-align:center; font-weight:800; padding:8px 10px; border-radius:6px;
+    margin:6px 0 10px; font-size:13px; letter-spacing:.3px;
+  }
+  .invoice-stamp-abono{ background:#fdecea; color:#b8302a; border:2px solid #b8302a; }
+  .invoice-stamp-pagada{ background:#eaf7ec; color:#1e7e34; border:2px solid #1e7e34; }
   .invoice-firma{ font-size:13px; color:#333; margin-bottom:14px; }
   .invoice-footer{ font-size:13px; color:#555; text-align:center; border-top:1px solid #ddd; padding-top:12px; }
 
@@ -325,6 +331,7 @@
     #facturaPreview .invoice-table{ font-size:9px; margin-bottom:6px; }
     #facturaPreview .invoice-table th, #facturaPreview .invoice-table td{ padding:3px 4px; }
     #facturaPreview .invoice-total{ font-size:11px; margin-bottom:6px; }
+    #facturaPreview .invoice-stamp{ font-size:10px; padding:5px 6px; margin:4px 0 8px; }
     #facturaPreview .invoice-firma{ font-size:8px; margin-bottom:6px; }
     #facturaPreview .invoice-footer{ font-size:8px; padding-top:6px; }
 
@@ -1412,7 +1419,7 @@ async function confirmCheckout(){
           ? (totalFacturaLocal > 0 ? Math.round((item.total / totalFacturaLocal) * abono) : abono)
           : 0
       }));
-      mostrarFactura(ventaConFactura, data.factura, cliente, telefono, estado);
+      mostrarFactura(ventaConFactura, data.factura, cliente, telefono, estado, data.historialAbonos);
       cart = [];
       checkoutIdempotencyKey = null;
       renderCartBadge();
@@ -1502,7 +1509,7 @@ async function abrirFacturaDesdeHistorial(factura){
       return;
     }
     closeModal('overlayHistorial');
-    mostrarFactura(data.items, factura, data.cliente || '', '', data.estado);
+    mostrarFactura(data.items, factura, data.cliente || '', '', data.estado, data.historialAbonos);
   }catch(err){
     showToast('No se pudo conectar con el Sheets.');
   }
@@ -1632,7 +1639,7 @@ function getWatermarkDataUri(){
   return img ? img.src : '';
 }
 
-function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloCopia){
+function construirFacturaHTML(items, factura, cliente, telefono, estado, historial, tituloCopia){
   const hoy = new Date();
   const fechaTexto = ('0'+hoy.getDate()).slice(-2) + '/' + ('0'+(hoy.getMonth()+1)).slice(-2) + '/' + hoy.getFullYear();
   const total = items.reduce((s, i) => s + i.total, 0);
@@ -1646,6 +1653,32 @@ function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloC
       <td>${fmt(it.total)}</td>
     </tr>
   `).join('');
+
+  const abonadoTotal = items.reduce((s,i) => s + (i.abono || 0), 0);
+  const saldoActual = Math.max(0, total - abonadoTotal);
+
+  const sello = estado === 'Separada'
+    ? `<div class="invoice-stamp invoice-stamp-abono">⚠ ABONO — SALDO PENDIENTE: ${fmt(saldoActual)}</div>`
+    : (estado === 'Vendida'
+      ? `<div class="invoice-stamp invoice-stamp-pagada">✔ PAGADA EN SU TOTALIDAD — JOYA ENTREGADA</div>`
+      : '');
+
+  const filasHistorial = (() => {
+    if (!historial || !historial.length) return '';
+    let acumulado = 0;
+    const filasH = historial.map(h => {
+      acumulado += h.monto;
+      const saldoTrasEstePago = Math.max(0, total - acumulado);
+      return `<tr><td>${h.fecha}</td><td>${h.tipo === 'Saldado' ? 'Pago final' : 'Abono'}</td><td>${fmt(h.monto)}</td><td>${fmt(saldoTrasEstePago)}</td></tr>`;
+    }).join('');
+    return `
+      <div class="invoice-copy-label" style="margin-top:8px;">Historial de pagos de esta factura</div>
+      <table class="invoice-table">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Saldo tras el pago</th></tr></thead>
+        <tbody>${filasH}</tbody>
+      </table>
+    `;
+  })();
 
   return `
     <div class="invoice-half">
@@ -1664,6 +1697,7 @@ function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloC
           <div>Fecha: ${fechaTexto}</div>
         </div>
       </div>
+      ${sello}
       <div class="invoice-warranty">Todas nuestras joyas están elaboradas en oro 18k, por lo tanto se garantiza el material; no cubre daños originados por mal uso.</div>
       <div class="invoice-copy-label">${tituloCopia}</div>
       <div class="invoice-meta-row">
@@ -1675,7 +1709,8 @@ function construirFacturaHTML(items, factura, cliente, telefono, estado, tituloC
         <tbody>${filas}</tbody>
       </table>
       <div class="invoice-total">Total: ${fmt(total)} &nbsp;·&nbsp; Estado: ${estado}</div>
-      ${estado === 'Separada' ? `<div class="invoice-total" style="color:#b8302a;">Abonó: ${fmt(items.reduce((s,i)=>s+(i.abono||0),0))} &nbsp;·&nbsp; Saldo: ${fmt(total - items.reduce((s,i)=>s+(i.abono||0),0))}</div>` : ''}
+      ${estado === 'Separada' ? `<div class="invoice-total" style="color:#b8302a;">Abonado hasta hoy: ${fmt(abonadoTotal)} &nbsp;·&nbsp; Saldo: ${fmt(saldoActual)}</div>` : ''}
+      ${filasHistorial}
       <div class="invoice-firma">Firma del vendedor: ______________________ &nbsp;&nbsp; (${items[0] ? (items[0].vendedor || '') : ''})</div>
       <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
     </div>
@@ -1687,16 +1722,16 @@ function resetMitadImpresion(){
   if (preview) preview.classList.remove('modo-reporte');
 }
 
-function mostrarFactura(items, factura, cliente, telefono, estado){
+function mostrarFactura(items, factura, cliente, telefono, estado, historial){
   const html =
-    construirFacturaHTML(items, factura, cliente, telefono, estado, 'Copia cliente') +
-    construirFacturaHTML(items, factura, cliente, telefono, estado, 'Copia tienda');
+    construirFacturaHTML(items, factura, cliente, telefono, estado, historial, 'Copia cliente') +
+    construirFacturaHTML(items, factura, cliente, telefono, estado, historial, 'Copia tienda');
   document.getElementById('facturaPreview').innerHTML = html;
   resetMitadImpresion();
   openModal('overlayFactura');
 }
 
-function construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, tituloCopia){
+function construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, historial, tituloCopia){
   const hoy = new Date();
   const fechaTexto = ('0'+hoy.getDate()).slice(-2) + '/' + ('0'+(hoy.getMonth()+1)).slice(-2) + '/' + hoy.getFullYear();
   const logoSrc = getLogoDataUri();
@@ -1709,6 +1744,27 @@ function construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTo
       <td>${fmt(it.total)}</td>
     </tr>
   `).join('');
+
+  const sello = estado === 'Separada'
+    ? `<div class="invoice-stamp invoice-stamp-abono">⚠ ABONO — SALDO PENDIENTE: ${fmt(saldo)}</div>`
+    : `<div class="invoice-stamp invoice-stamp-pagada">✔ PAGADA EN SU TOTALIDAD — JOYA ENTREGADA</div>`;
+
+  const filasHistorial = (() => {
+    if (!historial || !historial.length) return '';
+    let acumulado = 0;
+    const filasH = historial.map(h => {
+      acumulado += h.monto;
+      const saldoTrasEstePago = Math.max(0, total - acumulado);
+      return `<tr><td>${h.fecha}</td><td>${h.tipo === 'Saldado' ? 'Pago final' : 'Abono'}</td><td>${fmt(h.monto)}</td><td>${fmt(saldoTrasEstePago)}</td></tr>`;
+    }).join('');
+    return `
+      <div class="invoice-copy-label" style="margin-top:8px;">Historial de pagos de esta factura</div>
+      <table class="invoice-table">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Saldo tras el pago</th></tr></thead>
+        <tbody>${filasH}</tbody>
+      </table>
+    `;
+  })();
 
   return `
     <div class="invoice-half">
@@ -1727,6 +1783,7 @@ function construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTo
           <div>Fecha: ${fechaTexto}</div>
         </div>
       </div>
+      ${sello}
       <div class="invoice-copy-label">${tituloCopia}</div>
       ${cliente ? `<div class="invoice-meta-row"><div>Cliente: ${cliente}</div></div>` : ''}
       <table class="invoice-table">
@@ -1742,16 +1799,17 @@ function construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTo
         </tbody>
       </table>
       <div class="invoice-total" style="color:#b8302a;">Saldo pendiente: ${fmt(saldo)} &nbsp;·&nbsp; Estado: ${estado}</div>
+      ${filasHistorial}
       <div class="invoice-firma">Firma del vendedor: ______________________</div>
       <div class="invoice-footer">📷 @joyeria_dalias &nbsp;&nbsp;&nbsp; 📞 310 395 25 30</div>
     </div>
   `;
 }
 
-function mostrarFacturaAbono(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado){
+function mostrarFacturaAbono(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, historial){
   const html =
-    construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, 'Copia cliente') +
-    construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, 'Copia tienda');
+    construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, historial, 'Copia cliente') +
+    construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, historial, 'Copia tienda');
   const preview = document.getElementById('facturaPreview');
   preview.innerHTML = html;
   preview.classList.remove('modo-reporte');
@@ -1857,7 +1915,7 @@ async function registrarAbonoBtn(){
     if (data.success){
       showToast('Abono registrado ✓' + (data.estado === 'Vendida' ? ' · Factura saldada' : ''));
       closeModal('overlayAbonos');
-      mostrarFacturaAbono(factura, data.cliente, data.items, monto, data.nuevoAbono, data.total, data.saldo, data.estado);
+      mostrarFacturaAbono(factura, data.cliente, data.items, monto, data.nuevoAbono, data.total, data.saldo, data.estado, data.historialAbonos);
     } else {
       errEl.textContent = data.error || 'No se pudo registrar el abono.';
       errEl.style.display = 'block';
