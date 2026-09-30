@@ -415,6 +415,7 @@
   }
   .toast.show{ opacity:1; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -664,8 +665,12 @@
       <button class="btn btn-ghost" onclick="closeModal('overlayFactura')">Cerrar</button>
       <button class="btn btn-gold" style="flex:1" onclick="window.print()">🖨 Imprimir</button>
     </div>
+    <button class="btn btn-block" id="whatsappFacturaBtn" style="background:#25D366; color:#fff; margin-top:10px; font-weight:800;" onclick="enviarFacturaPorWhatsApp()">💬 Enviar por WhatsApp</button>
   </div>
 </div>
+
+<!-- Oculto: aquí se arma la imagen para WhatsApp (solo la copia cliente, tamaño pantalla) -->
+<div id="facturaWhatsappTemp" style="position:fixed; left:-9999px; top:0; width:380px;"></div>
 
 <!-- Modal: abonos -->
 <div class="overlay center hidden" id="overlayAbonos">
@@ -1722,12 +1727,73 @@ function resetMitadImpresion(){
   if (preview) preview.classList.remove('modo-reporte');
 }
 
+// Arma la copia cliente en un contenedor oculto (tamaño pantalla, no
+// el chiquito de imprimir), la convierte en imagen, y abre el menú
+// de compartir del celular para que elija WhatsApp y el contacto.
+async function enviarFacturaPorWhatsApp(){
+  if (!facturaActualParaCompartir){
+    showToast('No hay nada para compartir en este momento.');
+    return;
+  }
+  if (typeof html2canvas === 'undefined'){
+    showToast('No se pudo cargar la herramienta de imagen. Revisa tu conexión a internet e intenta de nuevo.');
+    return;
+  }
+
+  const btn = document.getElementById('whatsappFacturaBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Preparando...';
+
+  const temp = document.getElementById('facturaWhatsappTemp');
+  temp.innerHTML = facturaActualParaCompartir.html;
+
+  try{
+    const canvas = await html2canvas(temp, { backgroundColor: '#ffffff', scale: 2 });
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('No se pudo generar la imagen.');
+
+    const nombreArchivo = `Factura_${facturaActualParaCompartir.factura}.png`;
+    const file = new File([blob], nombreArchivo, { type: 'image/png' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({
+        files: [file],
+        title: 'Factura ' + facturaActualParaCompartir.factura
+      });
+    } else {
+      // El celular no admite compartir imágenes directo — se descarga
+      // la imagen para que la adjunten a mano en WhatsApp.
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nombreArchivo;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Se descargó la imagen — adjúntela a mano en WhatsApp.');
+    }
+  }catch(err){
+    if (err && err.name !== 'AbortError'){ // AbortError = la persona canceló el menú de compartir, no es un error real
+      showToast('No se pudo preparar la imagen para compartir.');
+    }
+  }finally{
+    temp.innerHTML = '';
+    btn.disabled = false; btn.textContent = '💬 Enviar por WhatsApp';
+  }
+}
+
+let facturaActualParaCompartir = null;
+
 function mostrarFactura(items, factura, cliente, telefono, estado, historial){
   const html =
     construirFacturaHTML(items, factura, cliente, telefono, estado, historial, 'Copia cliente') +
     construirFacturaHTML(items, factura, cliente, telefono, estado, historial, 'Copia tienda');
   document.getElementById('facturaPreview').innerHTML = html;
   resetMitadImpresion();
+  facturaActualParaCompartir = {
+    tipo: 'factura',
+    html: construirFacturaHTML(items, factura, cliente, telefono, estado, historial, 'Copia cliente'),
+    factura
+  };
   openModal('overlayFactura');
 }
 
@@ -1813,6 +1879,11 @@ function mostrarFacturaAbono(factura, cliente, items, montoAbonado, abonoTotal, 
   const preview = document.getElementById('facturaPreview');
   preview.innerHTML = html;
   preview.classList.remove('modo-reporte');
+  facturaActualParaCompartir = {
+    tipo: 'abono',
+    html: construirReciboAbonoHTML(factura, cliente, items, montoAbonado, abonoTotal, total, saldo, estado, historial, 'Copia cliente'),
+    factura
+  };
   openModal('overlayFactura');
 }
 
@@ -2152,6 +2223,7 @@ let ultimoResumenRango = null;
 
 function imprimirResumen(){
   if (!ultimoResumen) return;
+  facturaActualParaCompartir = null;
   const d = ultimoResumen;
   const fechaTexto = (f) => { const [y,m,dd] = f.split('-'); return dd+'/'+m+'/'+y; };
   const logoSrc = getLogoDataUri();
