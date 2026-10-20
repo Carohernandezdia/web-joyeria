@@ -774,6 +774,19 @@
             <button class="btn btn-ghost btn-block" id="entradasListaBuscarBtn" onclick="cargarListaEntradas()">Buscar entradas</button>
             <div id="entradasListaContenido" style="margin-top:14px;"></div>
           </div>
+
+          <div class="admin-section">
+            <h4>⚠ Corrección de inventario (una sola vez)</h4>
+            <div class="modal-sub" style="margin-top:0;">
+              El sistema cambió: ahora el oro solo sale del inventario cuando la joya queda
+              completamente paga, no cuando se separa. Esto devuelve al inventario el oro de
+              TODAS las facturas que hoy están separadas (pendientes), porque bajo la lógica
+              vieja ya se les había descontado. <b>Úsela solo una vez</b> — si la usa dos veces,
+              va a sumar inventario de más.
+            </div>
+            <button class="btn btn-danger btn-block" id="corregirInventarioBtn" onclick="corregirInventarioSeparadasBtn()">Devolver al inventario las separadas de hoy</button>
+            <div id="corregirInventarioResultado" style="margin-top:14px;"></div>
+          </div>
         </div>
 
         <div id="adminTab-gastos" style="display:none;">
@@ -854,6 +867,10 @@
                 <label>Teléfono</label>
                 <input type="text" id="editarClienteTelefono">
               </div>
+            </div>
+            <div class="field">
+              <label>Abono ya pagado de la factura ($) — solo aplica si alguna línea queda "Separada"</label>
+              <input type="number" id="editarAbonoFactura" min="0" step="1000">
             </div>
           </div>
           <div id="editarLineas" style="margin-top:8px;"></div>
@@ -2174,6 +2191,20 @@ async function cargarResumenRango(){
         </div>
       `).join('');
 
+    const filasDetalleOro = (data.detalleOro || [])
+      .map(d => `
+        <div class="admin-item-card">
+          <div class="admin-item-row">
+            <div style="flex:2">
+              <span class="admin-item-label">${d.etiqueta} a ${fmt(d.precio)}/g</span>
+              <div style="font-size:14px;">${d.gramos.toFixed(2)} g · ${d.desde === d.hasta ? d.desde : d.desde + ' — ' + d.hasta}</div>
+              <div style="font-size:13px; color:var(--text-dim);">Bruto ${fmt(d.bruto)} − desc. ${fmt(d.descuento)} + m.o. ${fmt(d.manoDeObra)}</div>
+            </div>
+            <div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(d.total)}</div>
+          </div>
+        </div>
+      `).join('');
+
     contenido.innerHTML = `
       <div class="admin-item-card" style="border-color:var(--gold-deep);">
         <div class="admin-item-row"><div style="flex:2">Total ventas (finiquitadas)</div><div style="text-align:right; font-weight:700; color:var(--gold-light);">${fmt(data.totalVentas)}</div></div>
@@ -2194,6 +2225,10 @@ async function cargarResumenRango(){
       <div class="admin-section">
         <h4>Desglose — Separado (gramaje y $)</h4>
         ${filasSeparado || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
+      </div>
+      <div class="admin-section">
+        <h4>Detalle del oro por precio (para cuadrar cuentas)</h4>
+        ${filasDetalleOro || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
       </div>
       <div class="admin-section">
         <h4>Inventario actual</h4>
@@ -2251,6 +2286,10 @@ function imprimirResumen(){
     .map(e => `<tr><td>${e.categoria} — ${e.producto} (${e.fecha})</td><td>+${e.cantidad}</td></tr>`)
     .join('');
 
+  const filasDetalleOroReporte = (d.detalleOro || [])
+    .map(x => `<tr><td>${x.etiqueta} a ${fmt(x.precio)}/g (${x.gramos.toFixed(2)} g, ${x.desde === x.hasta ? x.desde : x.desde + '—' + x.hasta})<br><span style="font-size:10px; color:#777;">Bruto ${fmt(x.bruto)} − desc. ${fmt(x.descuento)} + m.o. ${fmt(x.manoDeObra)}</span></td><td>${fmt(x.total)}</td></tr>`)
+    .join('');
+
   const html = `
     <div class="invoice-half reporte-print" style="border-bottom:none;">
       ${watermarkSrc ? `<img class="invoice-watermark" src="${watermarkSrc}" alt="">` : ''}
@@ -2282,6 +2321,10 @@ function imprimirResumen(){
       <div class="invoice-copy-label">Desglose — Separado</div>
       <table class="invoice-table">
         <tbody>${filasSeparado || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
+      </table>
+      <div class="invoice-copy-label">Detalle del oro por precio</div>
+      <table class="invoice-table">
+        <tbody>${filasDetalleOroReporte || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
       <div class="invoice-copy-label">Inventario actual</div>
       <table class="invoice-table">
@@ -2712,6 +2755,42 @@ async function eliminarEntradaBtn(i){
   }
 }
 
+async function corregirInventarioSeparadasBtn(){
+  const ok1 = confirm('Esto devuelve al inventario el oro de TODAS las facturas que hoy están separadas. Solo debe hacerse UNA VEZ. ¿Está segura de que no lo ha hecho antes?');
+  if (!ok1) return;
+  const ok2 = confirm('Confirmación final: esto no se puede deshacer fácilmente. ¿Continuar?');
+  if (!ok2) return;
+
+  const btn = document.getElementById('corregirInventarioBtn');
+  const resultado = document.getElementById('corregirInventarioResultado');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Corrigiendo...';
+  resultado.innerHTML = '';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'corregirInventarioSeparadasActuales', pin: adminPinValue })
+    });
+    const data = await res.json();
+    if (data.success){
+      const devueltas = data.devueltas || [];
+      showToast(`Inventario corregido ✓ (${devueltas.length} líneas devueltas)`);
+      resultado.innerHTML = devueltas.length
+        ? '<div class="modal-sub" style="margin:0;">' + devueltas.map(d => `Factura ${d.factura}: +${d.cantidad} ${d.producto}`).join('<br>') + '</div>'
+        : '<div class="modal-sub" style="margin:0;">No había nada separado para devolver.</div>';
+    } else {
+      showToast(data.error || 'No se pudo corregir.');
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Devolver al inventario las separadas de hoy';
+  }
+}
+
 // ---------- Ver y editar gastos ----------
 const CATEGORIAS_GASTO = ['Nómina','Aseo','Energía','Arriendo','Vigilancia','Inversiones','Publicidad','EPS','Impuestos','Gastos de vendedores','Otros'];
 let listaGastosActual = [];
@@ -2945,6 +3024,7 @@ async function buscarFacturaEditar(){
     lineasParaEditar = data.lineas;
     document.getElementById('editarClienteNombre').value = data.cliente || '';
     document.getElementById('editarClienteTelefono').value = data.telefono || '';
+    document.getElementById('editarAbonoFactura').value = data.abonoActual || '';
     document.getElementById('editarClienteBlock').style.display = 'block';
     renderLineasEditar();
     document.getElementById('guardarEdicionBtn').style.display = 'block';
@@ -3021,6 +3101,14 @@ async function guardarEdicionFacturaBtn(){
 
   const cliente = document.getElementById('editarClienteNombre').value.trim();
   const telefono = document.getElementById('editarClienteTelefono').value.trim();
+  const abonoFactura = parseNum(document.getElementById('editarAbonoFactura').value);
+
+  const algunaSeparada = lineasParaEditar.some((l, i) => document.getElementById('editarEstado_' + i).value === 'Separada');
+  if (algunaSeparada && abonoFactura <= 0){
+    errEl.textContent = 'Esta factura queda Separada — escribe cuánto han abonado hasta ahora.';
+    errEl.style.display = 'block';
+    return;
+  }
 
   const lineas = lineasParaEditar.map((l, i) => ({
     sheetName: l.sheetName, fila: l.fila,
@@ -3046,7 +3134,7 @@ async function guardarEdicionFacturaBtn(){
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'guardarEdicionFactura', pin: adminPinValue, cliente, telefono, lineas })
+      body: JSON.stringify({ action: 'guardarEdicionFactura', pin: adminPinValue, cliente, telefono, lineas, abonoFactura })
     });
     const data = await res.json();
     if (data.success){
