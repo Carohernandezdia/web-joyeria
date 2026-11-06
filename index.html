@@ -787,6 +787,18 @@
             <button class="btn btn-danger btn-block" id="corregirInventarioBtn" onclick="corregirInventarioSeparadasBtn()">Devolver al inventario las separadas de hoy</button>
             <div id="corregirInventarioResultado" style="margin-top:14px;"></div>
           </div>
+
+          <div class="admin-section">
+            <h4>🔄 Reiniciar inventario desde cero</h4>
+            <div class="modal-sub" style="margin-top:0;">
+              Pone en 0 el Stock inicial, las Entradas y las Salidas de TODOS los productos, y
+              borra el historial de entradas con fecha. Las ventas ya hechas NO se tocan, ni el
+              Resumen — esto es solo el conteo de inventario, para volver a empezar limpio.
+              Después de reiniciar, tendrá que volver a escribir el stock inicial real de cada
+              producto a mano, en la pestaña Inventario de arriba.
+            </div>
+            <button class="btn btn-danger btn-block" id="reiniciarInventarioBtn" onclick="reiniciarInventarioBtn()">Reiniciar todo el inventario a cero</button>
+          </div>
         </div>
 
         <div id="adminTab-gastos" style="display:none;">
@@ -857,6 +869,18 @@
             <input type="text" id="editarFacturaInput" placeholder="Ej. 00123">
           </div>
           <button class="btn btn-ghost btn-block" id="buscarEditarBtn" onclick="buscarFacturaEditar()">Buscar</button>
+          <div class="admin-section" style="margin-top:24px;">
+            <h4>🛠 Facturas pagadas que siguen "Separadas"</h4>
+            <div class="modal-sub" style="margin-top:0;">
+              Busca las facturas que ya están pagadas completas pero quedaron como separadas.
+              Primero solo las lista (no cambia nada). Si salen, "Reparar" las pasa a Vendida con
+              la fecha de su último pago y descuenta el oro del inventario.
+            </div>
+            <button class="btn btn-ghost btn-block" id="revisarPagadasBtn" onclick="revisarFacturasPagadasSeparadas()">Revisar</button>
+            <div id="pagadasSeparadasResultado" style="margin-top:12px;"></div>
+            <button class="btn btn-danger btn-block" id="repararPagadasBtn" style="display:none; margin-top:10px;" onclick="repararFacturasPagadasSeparadasBtn()">Reparar estas facturas</button>
+          </div>
+
           <div id="editarClienteBlock" style="display:none; margin-top:16px;">
             <div class="row-2">
               <div class="field">
@@ -2156,10 +2180,11 @@ async function cargarResumenRango(){
           <div class="admin-item-row">
             <div style="flex:2"><span class="admin-item-label">${inv.categoria} — ${inv.producto}</span></div>
           </div>
-          <div class="admin-item-row" style="font-size:13px; color:var(--text-dim); gap:6px;">
-            <div>Inicial: ${inv.stockInicial}</div>
+          <div class="admin-item-row" style="font-size:13px; color:var(--text-dim); gap:6px; flex-wrap:wrap;">
+            <div>Inicial (a esa fecha): ${inv.stockInicial}</div>
             <div>Entradas: ${inv.entradas}</div>
-            <div>Salidas: ${inv.salidas}</div>
+            <div>Vendido: ${inv.salidasVendido}</div>
+            <div>Separado: ${inv.salidasSeparado}</div>
             <div style="font-weight:700; color:var(--gold-light);">Saldo: ${inv.saldo}</div>
           </div>
         </div>
@@ -2231,7 +2256,7 @@ async function cargarResumenRango(){
         ${filasDetalleOro || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
       </div>
       <div class="admin-section">
-        <h4>Inventario actual</h4>
+        <h4>Inventario del rango (inicial a esa fecha + entradas − vendido/separado)</h4>
         ${filasInventario || '<div class="modal-sub" style="margin:0;">Sin datos.</div>'}
       </div>
       <div class="admin-section">
@@ -2275,7 +2300,7 @@ function imprimirResumen(){
     .join('');
 
   const filasInventario = (d.inventarioActual || [])
-    .map(inv => `<tr><td>${inv.categoria} — ${inv.producto}</td><td>Inicial ${inv.stockInicial} · Entradas ${inv.entradas} · Salidas ${inv.salidas} · <b>Saldo ${inv.saldo}</b></td></tr>`)
+    .map(inv => `<tr><td>${inv.categoria} — ${inv.producto}</td><td>Inicial ${inv.stockInicial} · Entradas ${inv.entradas} · Vendido ${inv.salidasVendido} · Separado ${inv.salidasSeparado} · <b>Saldo ${inv.saldo}</b></td></tr>`)
     .join('');
 
   const filasGastosReporte = (d.listaGastos || [])
@@ -2326,7 +2351,7 @@ function imprimirResumen(){
       <table class="invoice-table">
         <tbody>${filasDetalleOroReporte || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
-      <div class="invoice-copy-label">Inventario actual</div>
+      <div class="invoice-copy-label">Inventario del rango</div>
       <table class="invoice-table">
         <tbody>${filasInventario || '<tr><td colspan="2">Sin datos.</td></tr>'}</tbody>
       </table>
@@ -2788,6 +2813,102 @@ async function corregirInventarioSeparadasBtn(){
     showToast('No se pudo conectar con el Sheets.');
   }finally{
     btn.disabled = false; btn.textContent = 'Devolver al inventario las separadas de hoy';
+  }
+}
+
+async function reiniciarInventarioBtn(){
+  const ok1 = confirm('Esto pone en 0 el Stock inicial, Entradas y Salidas de TODOS los productos, y borra el historial de entradas. Las ventas no se tocan. ¿Está segura?');
+  if (!ok1) return;
+  const texto = prompt('Para confirmar, escriba la palabra REINICIAR (en mayúsculas):');
+  if (texto !== 'REINICIAR'){
+    showToast('No coincide — no se hizo ningún cambio.');
+    return;
+  }
+
+  const btn = document.getElementById('reiniciarInventarioBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Reiniciando...';
+
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'reiniciarInventarioCompleto', pin: adminPinValue })
+    });
+    const data = await res.json();
+    if (data.success){
+      showToast('Inventario reiniciado a cero ✓ — ahora escriba el stock inicial real de cada producto.');
+    } else {
+      showToast(data.error || 'No se pudo reiniciar.');
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Reiniciar todo el inventario a cero';
+  }
+}
+
+// ---------- Facturas pagadas que siguen "Separadas" ----------
+// "Revisar" solo LISTA (no modifica nada). "Reparar" las pasa a
+// Vendida con la fecha de su último pago y descuenta el inventario.
+async function revisarFacturasPagadasSeparadas(){
+  const btn = document.getElementById('revisarPagadasBtn');
+  const salida = document.getElementById('pagadasSeparadasResultado');
+  const botonReparar = document.getElementById('repararPagadasBtn');
+  if (btn.disabled) return;
+  btn.disabled = true; btn.textContent = 'Revisando...';
+  botonReparar.style.display = 'none';
+  salida.innerHTML = '';
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'listarFacturasPagadasSeparadas', pin: adminPinValue })
+    });
+    const data = await res.json();
+    if (!data.success){ showToast(data.error || 'No se pudo revisar.'); return; }
+    const lista = data.facturas || [];
+    if (!lista.length){
+      salida.innerHTML = '<div class="modal-sub" style="margin:0;">No hay ninguna: todas las separadas tienen saldo pendiente real. ✓</div>';
+    } else {
+      salida.innerHTML = lista.map(f =>
+        `<div class="admin-item-card"><div class="admin-item-row"><div style="flex:2"><span class="admin-item-label">Factura ${f.factura} — ${f.cliente || ''}</span></div><div style="text-align:right;">${fmt(f.abonado)} de ${fmt(f.total)}</div></div></div>`
+      ).join('');
+      botonReparar.style.display = 'block';
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Revisar';
+  }
+}
+
+async function repararFacturasPagadasSeparadasBtn(){
+  if (!confirm('Estas facturas pasarán a Vendida con la fecha de su último pago, y se descontará su oro del inventario. ¿Continuar?')) return;
+  const btn = document.getElementById('repararPagadasBtn');
+  const salida = document.getElementById('pagadasSeparadasResultado');
+  if (btn.disabled) return;
+  btn.disabled = true; btn.textContent = 'Reparando...';
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'repararFacturasPagadasSeparadas', pin: adminPinValue })
+    });
+    const data = await res.json();
+    if (data.success){
+      const n = (data.reparadas || []).length;
+      showToast(`Listo ✓ — ${n} factura(s) reparada(s)`);
+      salida.innerHTML = '<div class="modal-sub" style="margin:0;">Reparadas: ' + (data.reparadas || []).map(f => f.factura).join(', ') + '</div>';
+      btn.style.display = 'none';
+    } else {
+      showToast(data.error || 'No se pudo reparar.');
+    }
+  }catch(err){
+    showToast('No se pudo conectar con el Sheets.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Reparar estas facturas';
   }
 }
 
